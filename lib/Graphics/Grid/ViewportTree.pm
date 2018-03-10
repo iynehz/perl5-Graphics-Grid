@@ -10,7 +10,24 @@ extends qw(Forest::Tree);
 
 use namespace::autoclean;
 
+use Types::Standard qw(ArrayRef InstanceOf);
+
 use Graphics::Grid::Viewport;
+
+has '+children' => ( isa => ArrayRef [ InstanceOf ['Graphics::Grid::ViewportTree'] ] );
+
+around BUILDARGS => sub {
+    my $orig  = shift;
+    my $class = shift;
+
+    my %params = @_;
+    my $children = ( delete $params{children} ) // [];
+    $children =
+      [ map { $_->$_isa(__PACKAGE__) ? $_ : __PACKAGE__->new( node => $_ ); }
+          @$children ];
+
+    $class->$orig( %params, children => $children );
+};
 
 =method node() 
 

@@ -6,6 +6,7 @@ use Graphics::Grid::Class;
 
 # VERSION
 
+use Scalar::Util qw(looks_like_number);
 use Type::Params ();
 use Types::Standard qw(Str ArrayRef Value Num);
 use namespace::autoclean;
@@ -22,6 +23,11 @@ around BUILDARGS => sub {
         if ( ref( $_[0] ) ne 'HASH' ) {
             return $class->$orig( value => $_[0] );
         }
+    }
+    elsif ( @_ == 2
+        and ( ref( $_[0] ) eq 'ARRAY' or looks_like_number( $_[0] ) ) )
+    {
+        return $class->$orig( value => $_[0], unit => $_[1] );
     }
     return $class->$orig(@_);
 };
@@ -85,6 +91,20 @@ picas
 
 Picas. 1 pc = 12 pt.
 
+=item *
+
+char
+
+Multiples of nominal font height of the viewport (as specified by the
+viewport's C<fontsize>).
+
+=item *
+
+native
+
+Locations and dimensions are relative to the viewport's C<xscale> and
+C<yscale>.
+
 =back
 
 =cut
@@ -96,6 +116,22 @@ has unit => (
     coerce  => 1,
     default => sub { ['npc'] },
 );
+
+=method is_absolute_unit($unit_name)
+
+This is a class method. It tells if the given unit name is absolute or not.
+
+    my $is_absolute = Graphics::Grid::Unit->is_absolute_unit('cm');
+
+=cut
+
+classmethod is_absolute_unit($unit_name) {
+    state $check = Type::Params::compile(Unit);
+    my ($unit_name_coerced) = $check->($unit_name);
+
+    state $absolute_units = { map { $_ => 1 } qw(cm inches mm points picas) };
+    return exists( $absolute_units->{$unit_name_coerced} );
+}
 
 =method elems()
 
@@ -157,49 +193,6 @@ method stringify() {
     return Dumper( $self->value ) . ' x ' . Dumper( $self->unit );
 }
 
-=method as_cm($absolute_cm)
-
-This method returns a new Graphics::Grid::Unit object which has all its
-values converted to centimeter. The C<$absolute_cm> parameter tells
-it how to convert from C<npc> to C<cm>.
-
-    my $u = Grahpics::Grid::Unit->new(0.42);
-
-    # $u_in_cm is same as Graphics::Grid::Unit->new(42, "cm");
-    my $u_in_cm = $u->as_cm(100);
-    
-=cut
-
-method as_cm($abs_cm) {
-    my @values = map {
-        my $value = $self->value_at($_);
-        my $unit  = $self->unit_at($_);
-
-        if ( $unit eq 'npc' ) {
-            $value * $abs_cm;
-        }
-        elsif ( $unit eq 'cm' ) {
-            $value;
-        }
-        elsif ( $unit eq 'inches' ) {
-            $value * 2.54;
-        }
-        elsif ( $unit eq 'mm' ) {
-            $value / 10;
-        }
-        elsif ( $unit eq 'points' ) {
-            points_to_cm($value);
-        }
-        elsif ( $unit eq 'picas' ) {
-            points_to_cm($value) * 12;
-        }
-        else {
-            die "unsupported unit '$unit'";
-        }
-    } ( 0 .. $self->elems - 1 );
-    return ref($self)->new( value => \@values, unit => 'cm' );
-}
-
 __PACKAGE__->meta->make_immutable;
 
 1;
@@ -212,16 +205,20 @@ __END__
 
     use Graphics::Grid::Unit;
 
+    # $u1, $u2, $u3 are same
     my $u1 = Graphics::Grid::Unit->new(42);
-
-    # $u2 is same as $u1
     my $u2 = Graphics::Grid::Unit->new(42, "npc");
+    my $u3 = Graphics::Grid::Unit->new(value => 42, unit => "npc");
 
+    # $u4, $u5, and $u6 are same
     my $u3 = Graphics::Grid::Unit->new([1,2,3], "npc");
-
-    # $u4 is same as $u3
     my $u4 = Graphics::Grid::Unit->new([1,2,3], ["npc", "npc", "npc"]);
+    my $u4 = Graphics::Grid::Unit->new(value => [1,2,3], unit => "npc");
 
+    # or use the function interface
+    use Graphics::Grid::Functions qw(:all);
+    my $u = unit(@params);
+    
 =head1 DESCRIPTION
 
 A Graphics::Grid::Unit object is an array ref of unit values. A unit value is
@@ -231,15 +228,18 @@ a single numeric value with an associated unit.
 
 The constructor supports multiple forms of parameters. It can coerce
 from a single value to array ref. And it allows specifying the values and
-units without the C<values> and C<unit> keys.
+units without the C<value> and C<unit> keys.
 
-So below are equivalent,
+So below are all equivalent,
 
     Graphics::Grid::Unit->new(42);      # unit defaults to npc
+    Graphics::Grid::Unit->new([42]); 
     Graphics::Grid::Unit->new(42, "npc");
     Graphics::Grid::Unit->new([42], ["npc"]);
-    Graphics::Grid::Unit->new(values => 42, units => "npc");
-    Graphics::Grid::Unit->new(values => [42], units => ["npc"]);
+    Graphics::Grid::Unit->new(value => 42);
+    Graphics::Grid::Unit->new(value => [42]);
+    Graphics::Grid::Unit->new(value => 42, unit => "npc");
+    Graphics::Grid::Unit->new(value => [42], unit => ["npc"]);
 
 =head1 SEE ALSO
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 
+# draws four 5-point-stars
+
 use 5.014;
 use warnings;
 
@@ -62,5 +64,5 @@ for my $params (@vp_params) {
     up_viewport();
 }
 
-grid_write("foo.png");
+grid_write("stars.png");
 

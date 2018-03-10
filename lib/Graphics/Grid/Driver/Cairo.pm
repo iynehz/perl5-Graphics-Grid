@@ -7,12 +7,13 @@ use Graphics::Grid::Class;
 # VERSION
 
 use Cairo;
-use List::AllUtils qw(min max);
+use Scalar::Util qw(looks_like_number);
+use List::AllUtils qw(min max pairwise);
 use Math::Trig qw(:pi :radial deg2rad);
 use Path::Tiny;
 use Types::Standard qw(Enum Str InstanceOf Num);
 
-use Graphics::Grid::Util qw(dots_to_cm cm_to_dots points_to_cm);
+use Graphics::Grid::Util qw(dots_to_cm cm_to_dots points_to_cm cm_to_points);
 
 my $AntialiasMode = Enum [qw(default none gray subpixel)];
 my $Format =
@@ -122,8 +123,8 @@ has 'surface' => (
     }
 );
 
-has _current_viewport_width_cm  => ( is => 'rw' );
-has _current_viewport_height_cm => ( is => 'rw' );
+has current_vp_width_cm  => ( is => 'rw' );
+has current_vp_height_cm => ( is => 'rw' );
 
 with qw(Graphics::Grid::Driver);
 
@@ -138,17 +139,22 @@ method _set_vptree( $vptree, $old_vptree = undef ) {
     # bypass root vp
     shift @$path;
 
-    my $parent_width  = dots_to_cm( $self->width,  $self->dpi );
-    my $parent_height = dots_to_cm( $self->height, $self->dpi );
+    my $vp_width  = dots_to_cm( $self->width,  $self->dpi );
+    my $vp_height = dots_to_cm( $self->height, $self->dpi );
 
     for my $vp (@$path) {
-        my $x_vec      = $vp->x->as_cm($parent_width);
-        my $y_vec      = $vp->y->as_cm($parent_height);
-        my $width_vec  = $vp->width->as_cm($parent_width);
-        my $height_vec = $vp->height->as_cm($parent_height);
-
-        my ( $x, $y, $width, $height ) =
-          map { $_->value_at(0) } ( $x_vec, $y_vec, $width_vec, $height_vec );
+        my $x =
+          $self->_transform_width_to_cm( $vp->x, 0, $vp->gp, $vp_width,
+            $vp_height );
+        my $y =
+          $self->_transform_height_to_cm( $vp->y, 0, $vp->gp, $vp_width,
+            $vp_height );
+        my $width =
+          $self->_transform_width_to_cm( $vp->width, 0, $vp->gp, $vp_width,
+            $vp_height );
+        my $height =
+          $self->_transform_height_to_cm( $vp->height, 0, $vp->gp, $vp_width,
+            $vp_height );
 
         $ctx->translate( $x, $y );
 
@@ -158,12 +164,12 @@ method _set_vptree( $vptree, $old_vptree = undef ) {
 
         $ctx->translate( -$vp->hjust * $width, -$vp->vjust * $height );
 
-        $parent_width  = $width;
-        $parent_height = $height;
+        $vp_width  = $width;
+        $vp_height = $height;
     }
 
-    $self->_current_viewport_width_cm($parent_width);
-    $self->_current_viewport_height_cm($parent_height);
+    $self->current_vp_width_cm($vp_width);
+    $self->current_vp_height_cm($vp_height);
 }
 
 method _reset_transform() {
@@ -223,30 +229,26 @@ method data() {
     return $self->{DATA};
 }
 
-method _reset_dash() {
-    $self->cairo->set_dash( 0, [] );
-}
-
 method draw_circle($circle_grob) {
     my $ctx = $self->cairo;
 
-    my $parent_width  = $self->_current_viewport_width_cm;
-    my $parent_height = $self->_current_viewport_height_cm;
+    my $vp_width  = $self->current_vp_width_cm;
+    my $vp_height = $self->current_vp_height_cm;
 
-    my $x_vec = $circle_grob->x->as_cm($parent_width);
-    my $y_vec = $circle_grob->y->as_cm($parent_height);
-    my $r_vec = $circle_grob->r->as_cm( min( $parent_width, $parent_height ) );
-
-    my $gp_vec = $self->_get_effective_gp($circle_grob);
+    my $gp = $self->current_gp;
 
     for my $idx ( 0 .. $circle_grob->elems - 1 ) {
-
-        my ( $x, $y, $r ) =
-          map { $_->value_at($idx); } ( $x_vec, $y_vec, $r_vec );
-        my $gp = $gp_vec->at($idx);
+        my $x =
+          $self->_transform_width_to_cm( $circle_grob->x, $idx, $gp,
+            $vp_width, $vp_height );
+        my $y =
+          $self->_transform_height_to_cm( $circle_grob->y, $idx, $gp,
+            $vp_width, $vp_height );
+        my $r = $self->_transform_width_to_cm( $circle_grob->r, $idx, $gp,
+            min( $vp_width, $vp_height ) );
 
         $self->_draw_shape(
-            $gp,
+            $gp->at($idx),
             sub {
                 my $c = shift;
                 $c->new_path;
@@ -260,26 +262,30 @@ method draw_circle($circle_grob) {
 method draw_rect($rect_grob) {
     my $ctx = $self->cairo;
 
-    my $parent_width  = $self->_current_viewport_width_cm;
-    my $parent_height = $self->_current_viewport_height_cm;
+    my $vp_width  = $self->current_vp_width_cm;
+    my $vp_height = $self->current_vp_height_cm;
 
-    my $x_vec      = $rect_grob->x->as_cm($parent_width);
-    my $y_vec      = $rect_grob->y->as_cm($parent_height);
-    my $width_vec  = $rect_grob->width->as_cm($parent_width);
-    my $height_vec = $rect_grob->height->as_cm($parent_height);
-
-    my $gp_vec = $self->_get_effective_gp($rect_grob);
+    my $gp = $self->current_gp;
 
     for my $idx ( 0 .. $rect_grob->elems - 1 ) {
-        my ( $x, $y, $width, $height ) = map { $_->value_at($idx) }
-          ( $x_vec, $y_vec, $width_vec, $height_vec );
-        my $gp = $gp_vec->at($idx);
+        my $x =
+          $self->_transform_width_to_cm( $rect_grob->x, $idx, $gp, $vp_width,
+            $vp_height );
+        my $y =
+          $self->_transform_height_to_cm( $rect_grob->y, $idx, $gp, $vp_width,
+            $vp_height );
+        my $width =
+          $self->_transform_width_to_cm( $rect_grob->width, $idx, $gp,
+            $vp_width, $vp_height );
+        my $height =
+          $self->_transform_height_to_cm( $rect_grob->height, $idx, $gp,
+            $vp_width, $vp_height );
 
         my ( $left, $bottom ) =
           $rect_grob->calc_left_bottom( $x, $y, $width, $height );
 
         $self->_draw_shape(
-            $gp,
+            $gp->at($idx),
             sub {
                 my $c = shift;
                 $c->new_path;
@@ -326,36 +332,29 @@ method draw_polygon($polygon_grob) {
 method _draw_polyline( $polyline_grob, $path_func, $is_fill = false ) {
     my $ctx = $self->cairo;
 
-    my $parent_width  = $self->_current_viewport_width_cm;
-    my $parent_height = $self->_current_viewport_height_cm;
-
-    my $gp_vec = $self->_get_effective_gp($polyline_grob);
+    my $gp = $self->current_gp;
 
     for my $idx ( 0 .. $polyline_grob->elems - 1 ) {
         my $points = $polyline_grob->get_points($idx);
 
-        # do not draw if there are less than 2 points
-        next if ( @$points < 2 );
+        my $unit_x = $points->{x};
+        my $unit_y = $points->{y};
 
         my @points_cm = map {
-            my $x = $_->[0]->as_cm($parent_width)->value_at(0);
-            my $y = $_->[1]->as_cm($parent_width)->value_at(0);
+            my $x = $self->_transform_width_to_cm( $unit_x, $_, $gp );
+            my $y = $self->_transform_height_to_cm( $unit_y, $_, $gp );
             [ $x, $y ];
-        } @$points;
+        } ( 0 .. $unit_x->elems - 1 );
 
-        my $gp = $gp_vec->at($idx);
-        $self->_draw_shape( $gp, fun($c) { $path_func->( $c, \@points_cm ); },
-            $is_fill );
+        $self->_draw_shape(
+            $gp->at($idx),
+            fun($c)
+            {
+                $path_func->( $c, \@points_cm );
+            },
+            $is_fill
+        );
     }
-}
-
-method _set_dash_by_line_type($line_type) {
-    my $ctx = $self->cairo;
-
-    #my $dash = $top->dash_pattern;
-    #if(defined($dash) && scalar(@{ $dash })) {
-    #    $context->set_dash(0, @{ $dash });
-    #}
 }
 
 method _draw_shape( $gp, $path_func, $is_fill = false ) {
@@ -371,27 +370,60 @@ method _draw_shape( $gp, $path_func, $is_fill = false ) {
     }
 
     my $line_type = $gp->lty->[0];
-    my $line_width = max( $gp->lwd->[0] * $gp->lex->[0], 1 );
-    if ( $line_type ne 'blank' and $line_width ) {
+
+    if ( $line_type ne 'blank' ) {
+
+        my $line_width = max( $gp->lwd->[0] * $gp->lex->[0], 1 );
+        my $line_end = $gp->lineend->[0];
 
         # grid's lineend/linejoin enums are same as Cairo's line_cap/line_join
-        $ctx->set_line_cap( $gp->lineend->[0] );
+        $ctx->set_line_cap($line_end);
         $ctx->set_line_join( $gp->linejoin->[0] );
 
         $ctx->set_miter_limit( $gp->linemitre->[0] );
 
         $self->_set_color($gp);
-        $self->_set_dash_by_line_type($line_type);
+
+        $ctx->save;
 
         # $line_width is in absolute dots
-        my $matrix = $ctx->get_matrix();
         $self->_unset_scale_cm();
-        $ctx->set_line_width($line_width);
-        $ctx->stroke;
-        $ctx->set_matrix($matrix);
 
-        # reset dash
-        $self->_reset_dash();
+        $ctx->set_line_width($line_width);
+
+        # dash is decided by the combination of lty, lwd, lineend
+        unless ( $line_type eq 'solid' ) {
+            my $adjust = $line_end eq 'butt' ? 0 : $line_width;
+
+            state $dash_data = {
+                dashed =>
+                  [ 5 * $line_width - $adjust, 3 * $line_width + $adjust, ],
+                dotted =>
+                  [ 2 * $line_width - $adjust, 2 * $line_width + $adjust, ],
+                dotdash => [
+                    2 * $line_width - $adjust,
+                    2 * $line_width + $adjust,
+                    5 * $line_width - $adjust,
+                    2 * $line_width + $adjust,
+                ],
+                longdash =>
+                  [ 8 * $line_width - $adjust, 2 * $line_width + $adjust, ],
+                twodash => [
+                    3 * $line_width - $adjust,
+                    1 * $line_width + $adjust,
+                    7 * $line_width - $adjust,
+                    1 * $line_width + $adjust,
+                ],
+            };
+
+            if ( my $dashes = $dash_data->{$line_type} ) {
+                $ctx->set_dash( 0, @$dashes );
+            }
+        }
+
+        $ctx->stroke;
+
+        $ctx->restore;
 
         return 1;
     }
@@ -432,33 +464,34 @@ method _select_font_face($gp) {
 method draw_text($text_grob) {
     my $ctx = $self->cairo;
 
-    my $parent_width  = $self->_current_viewport_width_cm;
-    my $parent_height = $self->_current_viewport_height_cm;
+    my $vp_width  = $self->current_vp_width_cm;
+    my $vp_height = $self->current_vp_height_cm;
 
-    my $x_vec = $text_grob->x->as_cm($parent_width);
-    my $y_vec = $text_grob->y->as_cm($parent_height);
-
-    my $gp_vec = $self->_get_effective_gp($text_grob);
+    my $gp = $self->current_gp;
 
     for my $idx ( 0 .. $text_grob->elems - 1 ) {
         my $text = $text_grob->label->[$idx];
         next unless ( length($text) );
 
-        my $x = $x_vec->value_at($idx);
-        my $y = $y_vec->value_at($idx);
+        my $x =
+          $self->_transform_width_to_cm( $text_grob->x, $idx, $gp,
+            $vp_width, $vp_height );
+        my $y =
+          $self->_transform_height_to_cm( $text_grob->y, $idx, $gp,
+            $vp_width, $vp_height );
 
-        my $gp = $gp_vec->at($idx);
+        my $gp_single = $gp->at($idx);
 
         # Cairo does not support multiline text, so $gp->lineheight is not used
 
         my $font_size =
-          max( $gp->fontsize->[0] * $gp->cex->[0], 1 );
+          max( $gp_single->fontsize->[0] * $gp_single->cex->[0], 1 );
 
         $ctx->set_font_size($font_size);
         my $font_matrix = $ctx->get_font_matrix->multiply($matrix_points_to_cm);
         $ctx->set_font_matrix($font_matrix);
 
-        $self->_select_font_face($gp);
+        $self->_select_font_face($gp_single);
         my $exts = $ctx->text_extents($text);
 
         my $width  = $exts->{width};
@@ -467,20 +500,62 @@ method draw_text($text_grob) {
         my ( $left, $bottom ) =
           $text_grob->calc_left_bottom( $x, $y, $width, $height );
 
-        $self->_set_color($gp);
+        $self->_set_color($gp_single);
 
-        #$ctx->save;
+        $ctx->save;
 
-        #my $angle_rad = deg2rad($text_grob->rot->[$idx]);
-        #if ($angle_rad) {
-        #    $ctx->translate($x, $y);
-        #    $ctx->rotate($angle_rad);
-        #    $ctx->translate(-$x, -$y);
-        #}
+        my $angle_rad =
+          deg2rad( $text_grob->rot->[ $idx % $text_grob->elems ] );
+        if ($angle_rad) {
+            $ctx->translate( $x, $y );
+            $ctx->rotate($angle_rad);
+            $ctx->translate( -$x, -$y );
+        }
         $ctx->move_to( $left, $bottom );
         $ctx->show_text($text);
 
-        #ctx->restore;
+        $ctx->restore;
+    }
+}
+
+use Graphics::Grid::Grob::Text;
+
+# TODO: this is now just a poor man's implementation...
+method draw_points($points_grob) {
+    my $elems = $points_grob->elems;
+    my $gp    = $self->current_gp;
+
+    my $label_text;
+    my $pch = $points_grob->pch;
+    if ( looks_like_number($pch) ) {
+        if ( $pch >= 32 ) {
+            $label_text = chr($pch);
+        }
+    }
+    else {
+        $label_text = $pch;
+    }
+
+    if ($label_text) {
+
+        my @font_size = map {
+            cm_to_points(
+                $self->_transform_width_to_cm( $points_grob->size, $_, $gp ) )
+        } ( 0 .. $elems - 1 );
+        my $new_gp =
+          Graphics::Grid::GPar->new( fontsize => \@font_size )->merge($gp);
+
+        my $text = Graphics::Grid::Grob::Text->new(
+            label => [ ($label_text) x $points_grob->elems ],
+            x     => $points_grob->x,
+            y     => $points_grob->y,
+            gp    => $new_gp,
+        );
+
+        $self->draw_text($text);
+    }
+    else {
+        die "unsupported pch '$pch'";
     }
 }
 

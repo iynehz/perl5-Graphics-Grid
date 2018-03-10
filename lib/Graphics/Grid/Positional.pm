@@ -11,6 +11,8 @@ use Graphics::Grid::Types qw(:all);
 
 use Graphics::Grid::Unit;
 
+=tmpl attr_x_y
+
 =attr x
 
 A Grahpics::Grid::Unit object specifying x-location.
@@ -19,7 +21,11 @@ Default to C<unit(0.5, "npc")>.
 
 =attr y
 
-Similar to the C<x> attribute except that it is for y-location.
+A Grahpics::Grid::Unit object specifying y-location.
+
+Default to C<unit(0.5, "npc")>.
+
+=tmpl
 
 =cut
 

@@ -9,6 +9,8 @@ use Graphics::Grid::Role;
 use Types::Standard qw(InstanceOf);
 use Graphics::Grid::Types qw(:all);
 
+=tmpl attr_just
+
 =attr just
 
 The justification of the object, which consumes this role, relative to
@@ -44,6 +46,16 @@ like below.
     bottom_right | right_bottom     [ 1,   0   ]
     top_right | right_top           [ 1,   1   ]
 
+=attr hjust
+
+A reader accessor for the horizontal justification.
+
+=attr vjust
+
+A reader accessor for vertical justification.
+
+=tmpl
+
 =cut
 
 has just => (
@@ -53,21 +65,22 @@ has just => (
     default => sub { [ 0.5, 0.5 ] },    # center
 );
 
-=method hjust
+has hjust => (
+    is       => 'ro',
+    lazy     => 1,
+    builder  => '_build_hjust',
+    init_arg => undef,
+);
 
-A shortcut for getting the horizontal justification.
+has vjust => (
+    is       => 'ro',
+    lazy     => 1,
+    builder  => '_build_vjust',
+    init_arg => undef,
+);
 
-=cut
-
-method hjust() { $self->just->[0]; }
-
-=method vjust
-
-A shortcut for getting the vertical justification.
-
-=cut
-
-method vjust() { $self->just->[1]; }
+sub _build_hjust { $_[0]->just->[0]; }
+sub _build_vjust { $_[0]->just->[1]; }
 
 =method calc_left_bottom($x, $y, $width, $height)
 
@@ -75,10 +88,10 @@ Calculate (left, bottom) position according to x, y, width and height.
 
 =cut
 
-method calc_left_bottom($x, $y, $width, $height) {
+method calc_left_bottom( $x, $y, $width, $height ) {
     my $left   = $x - $self->hjust * $width;
     my $bottom = $y - $self->vjust * $height;
-    return ($left, $bottom);
+    return ( $left, $bottom );
 }
 
 1;

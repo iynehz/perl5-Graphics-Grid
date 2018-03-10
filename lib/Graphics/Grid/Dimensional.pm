@@ -11,6 +11,8 @@ use Graphics::Grid::Types qw(:all);
 
 use Graphics::Grid::Unit;
 
+=tmpl attr_width_height
+
 =attr width
 
 A Grahpics::Grid::Unit object specifying width.
@@ -20,6 +22,8 @@ Default to C<unit(1, "npc")>.
 =attr height
 
 Similar to the C<width> attribute except that it is for height. 
+
+=tmpl
     
 =cut
 

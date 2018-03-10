@@ -13,9 +13,47 @@ use Types::Standard qw(ArrayRef Int);
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);
 
+=tmpl attr_x_y
+
+=attr x
+
+A Grahpics::Grid::Unit object specifying x-values.
+
+Default to C<unit([0, 1], "npc")>.
+
+=attr y
+
+A Grahpics::Grid::Unit object specifying y-values.
+
+Default to C<unit([0, 1], "npc")>.
+
+C<x> and C<y> combines to define the points in the lines. C<x> and C<y> shall
+have same length. For example, the default values of C<x> and C<y> defines
+a line from point (0, 0) to (1, 1). If they have less than two elements, it
+is surely not enough to make a line and nothing would be drawn.
+
+=tmpl
+
+=tmpl attr_id
+
+=attr id
+
+An array ref used to separate locations in x and y into multiple lines. All
+locations with the same id belong to the same line.
+
+C<id> needs to have the same length as C<x> and C<y>.
+
+If C<id> is not specified then all points would be regarded as being in one
+line.  
+
+=tmpl
+
+=cut
+
 has id => ( isa => ArrayRef [Int] );
 
-has arrow => ( isa => ArrayRef );
+# TODO
+# has arrow => ( isa => ArrayRef[$Arrow] );
 
 has _points_by_idx => (
     is       => 'ro',
@@ -34,6 +72,17 @@ has [qw(+x +y)] => (
     default => sub { Graphics::Grid::Unit->new( [ 0, 1 ] ) }
 );
 
+=include attr_gp@Graphics::Grid::HasGPar
+
+=include attr_vp@Graphics::Grid::Grob
+
+=include attr_elems@Graphics::Grid::Grob
+
+For this module C<elems> returns the number of lines (number of unique
+C<id>) of a object.
+
+=cut
+
 method _build_elems() {
     unless ( $self->has_id ) {
         return 1;
@@ -43,9 +92,7 @@ method _build_elems() {
 
 method _build__points_by_idx() {
     if ( !$self->has_id ) {
-        my @points = map { [ $self->x->at($_), $self->y->at($_) ] }
-          ( 0 .. $self->x->elems - 1 );
-        return { 0 => \@points };
+        return { 0 => { x => $self->x, y => $self->y } };
     }
     else {
         my %points_by_id;
@@ -58,7 +105,21 @@ method _build__points_by_idx() {
 
         my @ids_sorted = sort keys %points_by_id;
         my %points_by_idx =
-          map { $_ => $points_by_id{ $ids_sorted[$_] } } ( 0 .. $#ids_sorted );
+          map {
+            my $id = $_;
+            my $points  = $points_by_id{ $ids_sorted[$id] };
+            my @x       = map { $_->[0] } @$points;
+            my @x_value = map { $_->value_at(0); } @x;
+            my @x_unit  = map { $_->unit_at(0); } @x;
+            my @y       = map { $_->[1] } @$points;
+            my @y_value = map { $_->value_at(0); } @y;
+            my @y_unit  = map { $_->unit_at(0); } @y;
+
+            $id => {
+                x => Graphics::Grid::Unit->new( \@x_value, \@x_unit ),
+                y => Graphics::Grid::Unit->new( \@y_value, \@y_unit ),
+            };
+          } ( 0 .. $#ids_sorted );
         return \%points_by_idx;
     }
 }
@@ -97,7 +158,6 @@ __PACKAGE__->meta->make_immutable;
 
 1;
 
-
 __END__
 
 =pod
@@ -106,7 +166,6 @@ __END__
 
     use Graphics::Grid::Grob::Polyline;
     use Graphics::Grid::GPar;
-
     my $polyline = Graphics::Grid::Grob::Polyline->new(
             x => [
                 ( map { $_ / 10 } ( 0 .. 4 ) ),
@@ -126,6 +185,10 @@ __END__
                 lwd => 3,
             )
     );
+
+    # or use the function interface
+    use Graphics::Grid::Functions qw(:all);
+    my $polyline = polyline_grob(%params);
 
 =head1 DESCRIPTION
 

@@ -11,10 +11,18 @@ use List::AllUtils qw(max);
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);
 
+=include attr_x_y@Graphics::Grid::Positional
+
 =attr r
 
-Radius of the circle. Default is 0.5 npc, relative to the smaller
+Radius of the circle. Default is 0.5 npc relative to the smaller
 one of viewport's width and height.
+
+=include attr_vp@Graphics::Grid::Grob
+
+=include attr_elems@Graphics::Grid::Grob
+
+For this module C<elems> returns the number of circles.
 
 =cut
 
@@ -50,16 +58,17 @@ __END__
 
     use Graphics::Grid::Grob::Circle;
     use Graphics::Grid::GPar;
-
-    my $rect = Graphics::Grid::Grob::Circle->new(
+    my $circle = Graphics::Grid::Grob::Circle->new(
             x => 0.5, y => 0.5, r => 0.5,
             gp => Graphics::Grid::GPar->new());
+
+    # or use the function interface
+    use Graphics::Grid::Functions qw(:all);
+    my $circle = circle_grob(%params);
 
 =head1 DESCRIPTION
 
 This class represents a circle graphical object.
-
-=head1 CONSTRUCTOR
 
 =head1 SEE ALSO
 

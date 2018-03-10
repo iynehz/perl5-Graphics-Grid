@@ -9,10 +9,46 @@ use Graphics::Grid::Unit;
 
 my @cases_constructor = (
     {
-        params => [ value => 0.5 ],
-        value  => [qw(0.5)],
-        unit   => [qw(npc)],
+        params => [42],
+        value  => [42],
+        unit   => ['npc'],
     },
+    {
+        params => [ [42] ],
+        value  => [42],
+        unit   => ['npc'],
+    },
+    {
+        params => [ 42, 'npc' ],
+        value  => [42],
+        unit   => ['npc'],
+    },
+    {
+        params => [ [42], ['npc'] ],
+        value  => [42],
+        unit   => ['npc'],
+    },
+    {
+        params => [ value => 42 ],
+        value  => [42],
+        unit   => ['npc'],
+    },
+    {
+        params => [ value => [42] ],
+        value  => [42],
+        unit   => ['npc'],
+    },
+    {
+        params => [ value => 42, unit => 'npc' ],
+        value  => [42],
+        unit   => ['npc'],
+    },
+    {
+        params => [ value => [42], unit => ['npc'] ],
+        value  => [42],
+        unit   => ['npc'],
+    },
+
     {
         params => [ value => [qw(0.2 0.3)], unit => "in" ],
         value  => [qw(0.2 0.3)],
@@ -33,6 +69,16 @@ my @cases_constructor = (
         value  => [qw(0.2 0.3)],
         unit   => [qw(npc inches)],
     },
+    {
+        params => [ 1, 'char' ],
+        value  => [qw(1)],
+        unit   => [qw(char)],
+    },
+    {
+        params => [ 1, 'native' ],
+        value  => [qw(1)],
+        unit   => [qw(native)],
+    },
 );
 
 for my $case (@cases_constructor) {
@@ -42,16 +88,7 @@ for my $case (@cases_constructor) {
     is( $unit->unit,  $case->{unit},  "unit" );
 }
 
-{
-    my $unit = Graphics::Grid::Unit->new(
-        value => [ 0.5,   1,        2,    3 ],
-        unit  => [ "npc", "inches", "cm", 'mm' ]
-    );
-    is( $unit->elems, 4, 'elems' );
-    my $as_cm = $unit->as_cm(100);
-    is( $as_cm->value, [ 50, 2.54, 2, 0.3 ], 'as_cm' );
-    is( $as_cm->unit, ['cm'], 'as_cm' );
-
-}
+ok( Graphics::Grid::Unit->is_absolute_unit('cm'),   'is_absolute_unit' );
+ok( !Graphics::Grid::Unit->is_absolute_unit('npc'), 'is_absolute_unit' );
 
 done_testing;

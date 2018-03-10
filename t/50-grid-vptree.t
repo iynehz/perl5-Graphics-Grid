@@ -8,8 +8,6 @@ use Test2::V0;
 use boolean;
 
 use Graphics::Grid;
-use Graphics::Grid::ViewportList;
-use Graphics::Grid::ViewportStack;
 use Graphics::Grid::ViewportTree;
 
 my $grid = Graphics::Grid->singleton;
@@ -20,8 +18,8 @@ is( $grid->current_vptree->stringify,
     'Viewport[ROOT]', 'vptree has a ROOT node' );
 
 $grid->push_viewport($a);
-$grid->push_viewport( Graphics::Grid::ViewportList->new( $b, $c ) );
-$grid->push_viewport( Graphics::Grid::ViewportStack->new( $d, $e ) );
+$grid->push_viewport([$b, $c]);
+$grid->push_viewport($d, $e);
 is(
     $grid->current_vptree->stringify,
 'Viewport[ROOT]->(Viewport[A]->(Viewport[B],Viewport[C]->(Viewport[D]->(Viewport[E]))))',

@@ -9,6 +9,22 @@ use MooseX::HasDefaults::RO;
 
 use List::AllUtils qw(max);
 
+=include attr_x_y@Graphics::Grid::Positional
+
+=include attr_width_height@Graphics::Grid::Dimensional
+
+=include attr_just@Graphics::Grid::Justifiable
+
+=include attr_gp@Graphics::Grid::HasGPar
+
+=include attr_vp@Graphics::Grid::Grob
+
+=include attr_elems@Graphics::Grid::Grob
+
+For this module C<elems> returns the number of rectangles.
+
+=cut
+
 with qw(
   Graphics::Grid::Grob
   Graphics::Grid::Positional
@@ -36,58 +52,18 @@ __END__
 
     use Graphics::Grid::Grob::Rect;
     use Graphics::Grid::GPar;
-
     my $rect = Graphics::Grid::Grob::Rect->new(
             x => 0.5, y => 0.5, width => 1, height => 1,
-            just => "centre", gp => Graphics::Grid::GPar->new());
+            just => "centre",
+            gp => Graphics::Grid::GPar->new());
+
+    # or use the function interface
+    use Graphics::Grid::Functions qw(:all);
+    my $rect = rect_grob(%params);
 
 =head1 DESCRIPTION
 
 This class represents a rectangular graphical object.    
-
-=head1 CONSTRUCTOR
-
-Valid parameter names are:
-
-=over 4
-
-=item *
-
-x
-
-A numeric arrayref or unit object specifying x-location.
-
-=item *
-
-y
-
-A numeric arrayref or unit object specifying y-location.
-
-=item *
-
-width
-
-A numeric arrayref or unit object specifying width.
-
-=item *
-
-height
-
-A numeric vector or unit object specifying height.
-
-=item *
-
-just
-
-The justification of the rectangle relative to its (x, y) location.
-
-=item *
-
-gp
-
-A Graphics::Grid::GPar object. 
-
-=back
 
 =head1 SEE ALSO
 

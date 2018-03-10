@@ -7,9 +7,10 @@ use warnings;
 
 # VERSION
 
+use Ref::Util qw(is_plain_arrayref);
 use Type::Library -base, -declare => qw(
   ValueWithUnit Unit GPar
-  PointSymbol
+  PlottingCharacter
   LineType LineEnd LineJoin
   FontFace
   Color
@@ -63,35 +64,42 @@ coerce Justification, from Str, via {
 
 # For unit with multiple names, like "inches" and "in", we directly support
 #  only one of its names, and handle other names via coercion.
-declare Unit, as Enum [qw(npc cm inches mm points picas char)];
+declare Unit, as Enum [qw(npc cm inches mm points picas char native)];
 coerce Unit, from Str, via {
     state $mapping;
     unless ($mapping) {
         $mapping = {
-            "in"         => "inches",
-            "pt"         => "points",
-            "pc"         => "picas",
-            "centimetre" => "cm",
-            "centimeter" => "cm",
-            "millimiter" => "mm",
-            "millimeter" => "mm",
+            "in"          => "inches",
+            "pt"          => "points",
+            "pc"          => "picas",
+            "centimetre"  => "cm",
+            "centimeter"  => "cm",
+            "centimetres" => "cm",
+            "centimeters" => "cm",
+            "millimiter"  => "mm",
+            "millimeter"  => "mm",
+            "millimiters" => "mm",
+            "millimeters" => "mm",
         };
     }
     return ( $mapping->{$_} // $_ );
 };
 
-declare PointSymbol, as Int | Str;
+declare PlottingCharacter, as (Int | Str), where { length($_) > 0 };
 
-declare LineType, as Enum [qw(blank solid dashed dotted dotdash longdash twodash)];
-declare LineEnd, as Enum [qw(round butt square)];
+declare LineType,
+  as Enum [qw(blank solid dashed dotted dotdash longdash twodash)];
+declare LineEnd,  as Enum [qw(round butt square)];
 declare LineJoin, as Enum [qw(round mitre bevel)];
 
 declare FontFace, as Enum [qw(plain bold italic oblique bold_italic)];
-coerce FontFace, from Str, via { sub { $_ =~ s/\./_/gr; } };
+coerce FontFace, from Str, via {
+    sub { $_ =~ s/\./_/gr; }
+};
 
 declare Clip, as Enum [qw(on off inherit)];
 
-declare_coercion "ArrayRefFromAny", to_type ArrayRef, from Any, via { [$_] };
+declare_coercion "ArrayRefFromAny", to_type ArrayRef, from Any, via { is_plain_arrayref($_) ? $_ : [$_] };
 declare_coercion "ArrayRefFromValue", to_type ArrayRef, from Value,
   via { [$_] };
 

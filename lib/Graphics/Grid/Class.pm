@@ -23,7 +23,7 @@ __END__
 
 =head1 DESCRIPTION
 
-C<use Graphics::Grid::Class> is equivalent of 
+C<use Graphics::Grid::Class ...;> is equivalent of 
 
     use Graphics::Grid::Setup qw(:class), ...;
 

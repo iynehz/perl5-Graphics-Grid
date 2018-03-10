@@ -12,12 +12,32 @@ use namespace::autoclean;
 use Graphics::Grid::GPar;
 use Graphics::Grid::Types qw(:all);
 
+=tmpl attr_vp
+
+=attr vp
+
+A viewport object. When drawing a grob, if the grob has this attribute, the
+viewport would be temporily pushed onto the global viewport stack before drawing
+takes place, and be poped after drawing. If the grob does not have this attribute
+set, it would be drawn on the existing current viewport in the global viewport
+stack. 
+
+=tmpl
+
+=cut
+
+has vp => ( is => 'ro', isa => InstanceOf ["Graphics::Grid::Viewport"] );
+
+=tmpl attr_elems
+
 =attr elems
 
 Get number of sub-elements in the grob.
 
 Grob classes shall implement a C<_build_elems()> method to support this
 attribute.
+
+=tmpl 
 
 =cut
 
@@ -29,18 +49,6 @@ has elems => (
 );
 
 has name => ( is => 'ro', isa => Str, default => '' );
-
-=attr vp
-
-A viewport object. When drawing a grob, if the grob has this attribute, the
-viewport would be temporily pushed onto the global viewport stack before drawing
-takes place, and be poped after drawing. If the grob does not have this attribute
-set, it would be drawn on the existing current viewport in the global viewport
-stack. 
-
-=cut
-
-has vp => ( is => 'ro', isa => InstanceOf ["Graphics::Grid::Viewport"] );
 
 with qw(
   Graphics::Grid::HasGPar

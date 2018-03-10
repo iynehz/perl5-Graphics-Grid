@@ -23,7 +23,7 @@ __END__
 
 =head1 DESCRIPTION
 
-C<use Graphics::Grid::Role> is equivalent of 
+C<use Graphics::Grid::Role ...;> is equivalent of 
 
     use Graphics::Grid::Setup qw(:role), ...;
 

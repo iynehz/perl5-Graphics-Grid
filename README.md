@@ -6,19 +6,21 @@ Graphics::Grid - An incomplete port of the R "grid" library to Perl
 
 # VERSION
 
-version 0.000001
+version 0.0000\_01
 
 # SYNOPSIS
 
-    use Graphics::Grid;
-    use Graphics::Grid::GPar;
-    use Graphics::Grid::Viewport;
+```perl
+use Graphics::Grid;
+use Graphics::Grid::GPar;
+use Graphics::Grid::Viewport;
 
-    my $grid = Graphics::Grid->new();
-    $grid->push_viewport(
-            Graphics::Grid::Viewport->new(width => 0.5, height => 0.5));
+my $grid = Graphics::Grid->new();
+$grid->push_viewport(
+        Graphics::Grid::Viewport->new(width => 0.5, height => 0.5));
 
-    $grid->rect(gp => Graphics::Grid::GPar->new(col => 'blue'));
+$grid->rect(gp => Graphics::Grid::GPar->new(col => 'blue'));
+```
 
 # DESCRIPTION
 
@@ -30,13 +32,14 @@ This library is an incomplete port of Paul Murrell's R "grid" library. The R
 the graphics facilities in R. It's used by some other R plotting libraries
 including the famous "ggplot2". 
 
-With my (immature maybe) understanding the key designs and features of the
-R "grid" library can be summarized as following:
+With my (immature maybe) understanding the fundamental designs and features
+of the R "grid" library can be summarized as following:
 
 - It supports a few graphical primitives (called "grob") like lines,
 rectangles, circles, text, etc. And they can be configured via a set
 of graphical parameters (called "gpar"), like colors, line weights and
-types, fonts, etc.
+types, fonts, etc. And, it also has a tree structure called "gTree"
+which allows arranging the grobs in a hierachical way.
 - It designs something called "viewport" which is basically an arbitrary
 rectangular region which defines the transform (position, coordinate scale,
 rotation) on the graphics device. There is a global viewport stack 
@@ -56,17 +59,25 @@ instead you specify its relative position, and width and height in ratio
 to the viewport on which the rectangle is drawn. Beause of this design,
 it's easy to adapt a plot to various types and sizes of graphics devices. 
 - Similar to many stuffs in the R world, parameters to the R "grid" library
-are vectorized. This means a single rectangular "grob" objct can actually
+are vectorized. This means a single rectangular "grob" object can actually
 contain information for multiple rectangles. 
 - It has a grid-based layout system. That's probably why the library got the
 name "grid".
 
 The target of this Perl Graphics::Grid library, as of today, is to have
-most of the R "grid"'s key features mentioned above except for the
-grid-layout system. 
+most of the R "grid"'s fundamental features mentioned above except for
+the grid-layout system. 
 
-And, [Graphics::Grid::Function](https://metacpan.org/pod/Graphics::Grid::Function) is a function interface of this library.
-In this sense it's more like the interface of the R "grid" library.
+This Graphics::Grid module is the object interface of this libray. There is
+also a function interface [Graphics::Grid::Functions](https://metacpan.org/pod/Graphics::Grid::Functions), which is more like
+the interface of the R "grid" library.
+
+# ATTRIBUTES
+
+## driver
+
+Set the device driver. The value needs to be a consumer of the [Graphics::Grid::Driver](https://metacpan.org/pod/Graphics::Grid::Driver)
+role. Default is a [Graphics::Grid::Driver::Cairo](https://metacpan.org/pod/Graphics::Grid::Driver::Cairo) object.
 
 # METHODS
 
@@ -80,7 +91,9 @@ the current viewport tree, whose root node contains the current viewport.
 
 Get the current viewport. It's same as,
 
-    $grid->current_vptree(0)->node;
+```
+$grid->current_vptree(0)->node;
+```
 
 ## push\_viewport(@viewports)
 
@@ -108,8 +121,10 @@ name is `$name`. If found it sets the node to current, and returns
 the number of tree leves it went down. So it's possible to do
 something like,
 
-    my $depth = downViewport(...);
-    upViewport($depth).
+```perl
+my $depth = downViewport(...);
+upViewport($depth).
+```
 
 `$name` can also be an array ref of names which defines a "path".
 In this case the top-most node in the "path" is set to current.
@@ -119,19 +134,27 @@ In this case the top-most node in the "path" is set to current.
 This is similar to the `down_viewport` method except that this always
 starts from the "ROOT" node.
 
-## draw\_grob($grob)
+## draw($grob)
 
-Draw a grob on the graphics device.
+Draw a grob (or gtree) on the graphics device.
 
-# CONSTRUCTOR
+## ${grob\_type}(%params)
 
-# TODO
+This creates a grob and draws it. For example, `rect(%params)` would create
+and draw a rectangular grob.
 
-A lot of things, including but not limited to:
+`$grob_type` can be one of following,
 
-- Fix the points grob and text grob.
-- Docs
-- Redraw on device resizing.
+- circle
+- lines
+- points
+- polygon
+- polyline
+- rect
+- segments
+- text
+- null
+- zero
 
 # ACKNOWLEDGEMENT
 
@@ -143,6 +166,8 @@ library is ported.
 The R grid package [https://stat.ethz.ch/R-manual/R-devel/library/grid/html/grid-package.html](https://stat.ethz.ch/R-manual/R-devel/library/grid/html/grid-package.html)
 
 [Graphics::Grid::Functions](https://metacpan.org/pod/Graphics::Grid::Functions)
+
+Examples in the `examples` directory of the package release.
 
 # AUTHOR
 

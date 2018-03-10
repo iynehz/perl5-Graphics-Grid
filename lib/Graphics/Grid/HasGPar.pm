@@ -9,11 +9,16 @@ use Graphics::Grid::Role;
 use Graphics::Grid::GPar;
 use Graphics::Grid::Types qw(:all);
 
+=tmpl attr_gp
+
 =attr gp
 
-A Graphics::Grid::GPar object. 
+An object of Graphics::Grid::GPar. Default is an empty gpar object.
+
+=tmpl
 
 =cut
+
 
 has gp => (
     is  => 'ro',

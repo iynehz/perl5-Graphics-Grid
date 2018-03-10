@@ -6,8 +6,6 @@ use warnings;
 use Test2::V0;
 
 use Graphics::Grid::Viewport;
-use Graphics::Grid::ViewportList;
-use Graphics::Grid::ViewportStack;
 use Graphics::Grid::ViewportTree;
 
 {
@@ -26,16 +24,10 @@ use Graphics::Grid::ViewportTree;
     my $tree = Graphics::Grid::ViewportTree->new(
         node     => $a,
         children => [
-            Graphics::Grid::ViewportTree->new(
-                node => $b,
-            ),
+            $b,
             Graphics::Grid::ViewportTree->new(
                 node     => $c,
-                children => [
-                    Graphics::Grid::ViewportTree->new(
-                        node => $d,
-                    )
-                ]
+                children => [$d]
             ),
         ]
     );

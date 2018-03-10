@@ -8,13 +8,13 @@ use Graphics::Grid::Class;
 
 # VERSION
 
-use POSIX ();
+use List::AllUtils qw(reduce);
 use Math::Trig qw(:pi :radial deg2rad);
 use Module::Load;
+use POSIX ();
 use Types::Standard qw(InstanceOf ConsumerOf ArrayRef HashRef Str);
 use namespace::autoclean;
 
-#use Graphics::Grid::State;
 use Graphics::Grid::Viewport;
 use Graphics::Grid::ViewportTree;
 use Graphics::Grid::Util;
@@ -33,15 +33,36 @@ has _current_vptree => (
     init_arg => undef,
 );
 
+=attr driver
+
+Set the device driver. The value needs to be a consumer of the L<Graphics::Grid::Driver>
+role. Default is a L<Graphics::Grid::Driver::Cairo> object.
+
+=cut
+
 has driver => (
     is      => 'ro',
     lazy    => 1,
     isa     => ConsumerOf ["Graphics::Grid::Driver"],
-    default => sub {
-        require Graphics::Grid::Driver::Cairo;
-        Graphics::Grid::Driver::Cairo->new( width => 1000, height => 1000 );
-    },
+    builder => '_build_driver',
+
 );
+
+has _gp_stack => (
+    is      => 'ro',
+    traits  => ['Array'],
+    default => sub { [] },
+    handles => {
+        _push_gp  => 'push',
+        _pop_gp   => 'pop',
+        _clear_gp => 'clear',
+    }
+);
+
+sub _build_driver {
+    require Graphics::Grid::Driver::Cairo;
+    Graphics::Grid::Driver::Cairo->new( width => 1000, height => 1000 );
+}
 
 sub _build__vptree {
     my ($self) = @_;
@@ -105,13 +126,8 @@ method _push_vp($vp) {
     if ( $vp->$_isa('Graphics::Grid::Viewport') ) {
         &$push_node($vp);
     }
-    elsif ( $vp->$_isa('Graphics::Grid::ViewportList') ) {
+    elsif ( Ref::Util::is_arrayref($vp) ) {
         &$push_node(@$vp);
-    }
-    elsif ( $vp->$_isa('Graphics::Grid::ViewportStack') ) {
-        for my $vp (@$vp) {
-            &$push_node($vp);
-        }
     }
     elsif ( $vp->$_isa('Graphics::Grid::ViewportTree') ) {
         my $t = $vp;
@@ -240,8 +256,8 @@ method _seek_viewport( $from_tree, $name_or_path ) {
             $self->_current_vptree($tree);
 
             my $depth         = 0;
-            my $from_tree_uid = $from_tree->node->uid;
-            while ( $tree->node->uid ne $from_tree_uid ) {
+            my $from_tree_uid = $from_tree->node->_uid;
+            while ( $tree->node->_uid ne $from_tree_uid ) {
                 $depth++;
                 last unless ( $tree->has_parent );
                 $tree = $tree->parent;
@@ -286,13 +302,13 @@ method seek_viewport($name_or_path) {
     return $n;
 }
 
-=method draw_grob($grob)
+=method draw($grob)
 
-Draw a grob on the graphics device.
+Draw a grob (or gtree) on the graphics device.
 
 =cut
 
-method draw_grob($grob) {
+method draw($grob) {
     $grob->validate();
 
     # set root vptree to driver if it does not yet have one.
@@ -304,32 +320,110 @@ method draw_grob($grob) {
         $self->push_viewport( $grob->vp );
     }
 
+    if ( $grob->gp ) {
+        $self->_push_gp( $grob->gp );
+    }
+    my @gp = reverse @{ $self->_gp_stack };
+    my $merged_gp = reduce { $a->merge($b) } $gp[0], @gp[ 1 .. $#gp ];
+    $self->driver->current_gp($merged_gp);
+
     $grob->draw( $self->driver );
+
+    if ( $grob->gp ) {
+        $self->_pop_gp();
+    }
 
     if ( $grob->vp ) {
         $self->pop_viewport( $grob->vp );
     }
 }
 
-my @grob_types = qw(circle lines polygon polyline rect text zero);
+my @grob_types = qw(
+  circle lines null points polygon polyline rect segments text zero
+);
 
-for my $grob_type (@grob_types) {
+classmethod _grob_types() {
+    return @grob_types;
+}
+
+=method ${grob_type}(%params)
+
+This creates a grob and draws it. For example, C<rect(%params)> would create
+and draw a rectangular grob.
+
+C<$grob_type> can be one of following,
+
+=tmpl grob_types
+
+=over 4
+
+=item *
+
+circle
+
+=item *
+
+lines
+
+=item *
+
+points
+
+=item *
+
+polygon
+
+=item *
+
+polyline
+
+=item *
+
+rect
+
+=item *
+
+segments
+
+=item *
+
+text
+
+=item *
+
+null
+
+=item *
+
+zero
+
+=back
+
+=tmpl
+
+=cut
+
+for my $grob_type ( __PACKAGE__->_grob_types ) {
     my $class = 'Graphics::Grid::Grob::' . ucfirst($grob_type);
     load $class;
 
     my $func = sub {
         my $self = shift;
         my $grob = $class->new(@_);
-        $self->draw_grob($grob);
+        $self->draw($grob);
     };
 
     no strict 'refs';    ## no critic
-    *{ $grob_type } = $func;
+    *{$grob_type} = $func;
 }
 
 # set current viewport to state
 method _set_vptree( $vptree = $self->_current_vptree ) {
     $self->driver->current_vptree($vptree);
+
+    my $path = $self->_current_vptree->path_from_root;
+    $self->_clear_gp;
+    $self->_push_gp( grep { defined $_ } map { $_->gp } @$path );
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -362,8 +456,8 @@ This library is an incomplete port of Paul Murrell's R "grid" library. The R
 the graphics facilities in R. It's used by some other R plotting libraries
 including the famous "ggplot2". 
 
-With my (immature maybe) understanding the key designs and features of the
-R "grid" library can be summarized as following:
+With my (immature maybe) understanding the fundamental designs and features
+of the R "grid" library can be summarized as following:
 
 =over 4
 
@@ -372,7 +466,8 @@ R "grid" library can be summarized as following:
 It supports a few graphical primitives (called "grob") like lines,
 rectangles, circles, text, etc. And they can be configured via a set
 of graphical parameters (called "gpar"), like colors, line weights and
-types, fonts, etc.
+types, fonts, etc. And, it also has a tree structure called "gTree"
+which allows arranging the grobs in a hierachical way.
 
 =item *
 
@@ -401,7 +496,7 @@ it's easy to adapt a plot to various types and sizes of graphics devices.
 =item *
 
 Similar to many stuffs in the R world, parameters to the R "grid" library
-are vectorized. This means a single rectangular "grob" objct can actually
+are vectorized. This means a single rectangular "grob" object can actually
 contain information for multiple rectangles. 
 
 =item *
@@ -412,33 +507,12 @@ name "grid".
 =back
 
 The target of this Perl Graphics::Grid library, as of today, is to have
-most of the R "grid"'s key features mentioned above except for the
-grid-layout system. 
+most of the R "grid"'s fundamental features mentioned above except for
+the grid-layout system. 
 
-And, L<Graphics::Grid::Function> is a function interface of this library.
-In this sense it's more like the interface of the R "grid" library.
-
-=head1 CONSTRUCTOR
-
-=head1 TODO
-
-A lot of things, including but not limited to:
-
-=over 4
-
-=item *
-
-Fix the points grob and text grob.
-
-=item *
-
-Docs
-
-=item *
-
-Redraw on device resizing.
-
-=back
+This Graphics::Grid module is the object interface of this libray. There is
+also a function interface L<Graphics::Grid::Functions>, which is more like
+the interface of the R "grid" library.
 
 =head1 ACKNOWLEDGEMENT
 
@@ -450,4 +524,6 @@ library is ported.
 The R grid package L<https://stat.ethz.ch/R-manual/R-devel/library/grid/html/grid-package.html>
 
 L<Graphics::Grid::Functions>
+
+Examples in the C<examples> directory of the package release.
 
