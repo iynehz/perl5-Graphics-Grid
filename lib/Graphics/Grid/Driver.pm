@@ -12,16 +12,31 @@ use Types::Standard qw(Enum Str InstanceOf Num);
 use Graphics::Grid::GPar;
 use Graphics::Grid::Util qw(points_to_cm);
 
+=attr width
+
+=attr height
+
+=cut
+
 has [ 'width', 'height' ] => (
     is       => 'rw',
     isa      => Num,
     required => 1
 );
+
+=attr dpi
+
+=cut 
+
 has dpi => (
     is      => 'rw',
     isa     => Num,
     default => 96
 );
+
+=attr current_vptree
+
+=cut
 
 has current_vptree => (
     is      => 'rw',
@@ -32,14 +47,15 @@ has current_vptree => (
     },
 );
 
-has [ 'current_vp_width_cm', 'current_vp_height_cm' ] => (
-    is  => 'rw',
-    isa => Num,
-);
+has [ '_current_vp_width_cm', '_current_vp_height_cm' ] => ( is => 'rw' );
+
+=attr current_gp
+
+=cut
 
 has current_gp => (
-    is => 'rw',
-    isa => InstanceOf['Graphics::Grid::GPar'],
+    is  => 'rw',
+    isa => InstanceOf ['Graphics::Grid::GPar'],
 );
 
 sub _set_vptree { }
@@ -73,24 +89,10 @@ sub default_gpar {
     );
 }
 
-my @gp_stack;
-
-method push_gp($gp) {
-    push @gp_stack, $gp;
-}
-
-method pop_gp() {
-    pop @{$self->gp_stack};
-}
-
-method _get_effective_gp($grob) {
-    return $self->gp;
-}
-
 method _transform_width_to_cm(
     $unit, $idx, $gp,
-    $vp_width_cm  = $self->current_vp_width_cm,
-    $vp_height_cm = $self->current_vp_height_cm
+    $vp_width_cm  = $self->_current_vp_width_cm,
+    $vp_height_cm = $self->_current_vp_height_cm
   )
 {
     return $self->_transform_to_cm( $unit, $idx, $gp, $vp_width_cm );
@@ -98,8 +100,8 @@ method _transform_width_to_cm(
 
 method _transform_height_to_cm(
     $unit, $idx, $gp,
-    $vp_width_cm  = $self->current_vp_width_cm,
-    $vp_height_cm = $self->current_vp_height_cm
+    $vp_width_cm  = $self->_current_vp_width_cm,
+    $vp_height_cm = $self->_current_vp_height_cm
   )
 {
     return $self->_transform_to_cm( $unit, $idx, $gp, $vp_height_cm );
@@ -141,3 +143,8 @@ classmethod _transform_to_cm( $unit, $idx, $gp, $length_cm ) {
 __END__
 
 =pod
+
+=SEE ALSO
+
+L<Graphics::Grid>
+

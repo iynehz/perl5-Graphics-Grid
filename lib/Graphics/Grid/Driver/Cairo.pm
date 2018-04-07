@@ -123,9 +123,6 @@ has 'surface' => (
     }
 );
 
-has current_vp_width_cm  => ( is => 'rw' );
-has current_vp_height_cm => ( is => 'rw' );
-
 with qw(Graphics::Grid::Driver);
 
 method _set_vptree( $vptree, $old_vptree = undef ) {
@@ -168,8 +165,8 @@ method _set_vptree( $vptree, $old_vptree = undef ) {
         $vp_height = $height;
     }
 
-    $self->current_vp_width_cm($vp_width);
-    $self->current_vp_height_cm($vp_height);
+    $self->_current_vp_width_cm($vp_width);
+    $self->_current_vp_height_cm($vp_height);
 }
 
 method _reset_transform() {
@@ -232,8 +229,8 @@ method data() {
 method draw_circle($circle_grob) {
     my $ctx = $self->cairo;
 
-    my $vp_width  = $self->current_vp_width_cm;
-    my $vp_height = $self->current_vp_height_cm;
+    my $vp_width  = $self->_current_vp_width_cm;
+    my $vp_height = $self->_current_vp_height_cm;
 
     my $gp = $self->current_gp;
 
@@ -262,8 +259,8 @@ method draw_circle($circle_grob) {
 method draw_rect($rect_grob) {
     my $ctx = $self->cairo;
 
-    my $vp_width  = $self->current_vp_width_cm;
-    my $vp_height = $self->current_vp_height_cm;
+    my $vp_width  = $self->_current_vp_width_cm;
+    my $vp_height = $self->_current_vp_height_cm;
 
     my $gp = $self->current_gp;
 
@@ -464,8 +461,8 @@ method _select_font_face($gp) {
 method draw_text($text_grob) {
     my $ctx = $self->cairo;
 
-    my $vp_width  = $self->current_vp_width_cm;
-    my $vp_height = $self->current_vp_height_cm;
+    my $vp_width  = $self->_current_vp_width_cm;
+    my $vp_height = $self->_current_vp_height_cm;
 
     my $gp = $self->current_gp;
 
