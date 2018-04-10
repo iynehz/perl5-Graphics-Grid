@@ -6,7 +6,7 @@ Graphics::Grid - An incomplete port of the R "grid" library to Perl
 
 # VERSION
 
-version 0.0000\_01
+version 0.0000\_02
 
 # SYNOPSIS
 
