@@ -144,7 +144,7 @@ __END__
 
 =pod
 
-=SEE ALSO
+=head1 SEE ALSO
 
 L<Graphics::Grid>
 
