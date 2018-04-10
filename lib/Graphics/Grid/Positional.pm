@@ -25,6 +25,8 @@ A Grahpics::Grid::Unit object specifying y-location.
 
 Default to C<unit(0.5, "npc")>.
 
+The reference point is the left-bottom of parent viewport.
+
 =tmpl
 
 =cut

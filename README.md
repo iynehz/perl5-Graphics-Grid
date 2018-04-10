@@ -156,6 +156,14 @@ and draw a rectangular grob.
 - null
 - zero
 
+# TODOS
+
+Including but not limited to,
+
+- Support canvas resize.
+- Support R pch symbols for points grob. 
+- Cache things to speed up the drawing.
+
 # ACKNOWLEDGEMENT
 
 Thanks to Paul Murrell and his great R "grid" library, from which this Perl
@@ -168,6 +176,8 @@ The R grid package [https://stat.ethz.ch/R-manual/R-devel/library/grid/html/grid
 [Graphics::Grid::Functions](https://metacpan.org/pod/Graphics::Grid::Functions)
 
 Examples in the `examples` directory of the package release.
+
+An article that explains a few concepts in the R "grid" package [http://ww2.amstat.org/publications/jse/v18n3/zhou.pdf](http://ww2.amstat.org/publications/jse/v18n3/zhou.pdf)
 
 # AUTHOR
 

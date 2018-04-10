@@ -14,14 +14,22 @@ use Graphics::Grid::Util qw(points_to_cm);
 
 =attr width
 
+Width of the device, in resolution dots.
+
+Default is 1000.
+
 =attr height
+
+Height of the device, in resolution dots.
+
+Default is 1000.
 
 =cut
 
 has [ 'width', 'height' ] => (
     is       => 'rw',
     isa      => Num,
-    required => 1
+    default  => 1000,
 );
 
 =attr dpi

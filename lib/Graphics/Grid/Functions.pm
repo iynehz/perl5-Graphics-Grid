@@ -20,7 +20,7 @@ use Exporter 'import';
 our @EXPORT_OK = (
     qw(
       unit gpar viewport
-      grid_write grid_draw
+      grid_write grid_draw grid_driver
       push_viewport pop_viewport up_viewport down_viewport seek_viewport
       gtree
       ), ( map { ( "grid_${_}", "${_}_grob" ) } @grob_types )
@@ -48,6 +48,17 @@ sub grid_draw {
 
 sub grid_write {
     $grid->driver->write(@_);
+}
+
+fun grid_driver(:$driver='Cairo', %rest) {
+    if ($driver->DOES('Graphics::Grid::Driver')) {
+        $grid->driver($driver);
+    } else {
+        my $cls = "Graphics::Grid::Driver::$driver";
+        load $cls;
+        $grid->driver($cls->new(%rest));
+    }
+    return $grid->driver;
 }
 
 sub gtree {
@@ -89,6 +100,24 @@ __END__
 
     use Graphics::Grid::Functions qw(:all);
 
+    grid_driver( width => 900, height => 300, format => 'svg' );
+    grid_rect();    # draw white background
+
+    for my $setting (
+        { color => 'red',   x => 1 / 6 },
+        { color => 'green', x => 0.5 },
+        { color => 'blue',  x => 5 / 6 }
+      )
+    {
+        push_viewport(
+            viewport( x => $setting->{x}, y => 0.5, width => 0.2, height => 0.6 ) );
+        grid_rect( gp => { fill => $setting->{color}, lty => 'blank' } );
+        grid_text( label => $setting->{color}, y => -0.1 );
+
+        pop_viewport();
+    }
+
+    grid_write("foo.svg");
 
 =head1 DESCRIPTION
 
@@ -150,6 +179,29 @@ It's equivalent to C<Graphics::Grid::GTree-E<gt>new>.
 =head2 grid_draw($grob)
 
 It's equivalent to Graphics::Grid's C<draw> method.
+
+=head2 grid_driver(:$driver='Cairo', %rest)
+
+Set the device driver. If you don't run this function, the default driver
+will be effective.
+
+If C<$driver> consumes Graphics::Grid::Driver, C<$driver> is assigned to
+the grid singleton, and C<%rest> is ignored.
+
+    grid_driver(driver => Graphics::Grid::Driver::Cairo->new(...));
+
+If C<$driver> is a string, a C<Graphics::Grid::Driver::$driver> object is
+created with C<%rest> as construction parameters, and is assigned to the
+grid singleton.
+
+    grid_driver(driver => 'Cairo', width => 800, height => 600);
+
+You may run it at the the beginning of you code. At present changing driver
+settings at the middle is not guarenteed to work.
+
+This function returns current width and height.
+
+    my $driver = grid_device();
 
 =head2 grid_write($filename)
 

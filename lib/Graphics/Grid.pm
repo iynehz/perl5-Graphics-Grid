@@ -40,7 +40,7 @@ role. Default is a L<Graphics::Grid::Driver::Cairo> object.
 =cut
 
 has driver => (
-    is      => 'ro',
+    is      => 'rw',
     lazy    => 1,
     isa     => ConsumerOf ["Graphics::Grid::Driver"],
     builder => '_build_driver',
@@ -59,8 +59,9 @@ has _gp_stack => (
 );
 
 sub _build_driver {
-    require Graphics::Grid::Driver::Cairo;
-    Graphics::Grid::Driver::Cairo->new( width => 1000, height => 1000 );
+    my $driver_cls = 'Graphics::Grid::Driver::Cairo';
+    load $driver_cls;
+    return $driver_cls->new();
 }
 
 sub _build__vptree {
@@ -513,6 +514,26 @@ This Graphics::Grid module is the object interface of this libray. There is
 also a function interface L<Graphics::Grid::Functions>, which is more like
 the interface of the R "grid" library.
 
+=head1 TODOS
+
+Including but not limited to,
+
+=over 4
+
+=item * 
+
+Support canvas resize.
+
+=item *
+
+Support R pch symbols for points grob. 
+
+=item *
+
+Cache things to speed up the drawing.
+
+=back
+
 =head1 ACKNOWLEDGEMENT
 
 Thanks to Paul Murrell and his great R "grid" library, from which this Perl
@@ -525,4 +546,6 @@ The R grid package L<https://stat.ethz.ch/R-manual/R-devel/library/grid/html/gri
 L<Graphics::Grid::Functions>
 
 Examples in the C<examples> directory of the package release.
+
+An article that explains a few concepts in the R "grid" package L<http://ww2.amstat.org/publications/jse/v18n3/zhou.pdf>
 
