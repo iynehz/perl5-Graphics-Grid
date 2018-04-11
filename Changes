@@ -1,5 +1,8 @@
 Revision history
 
+0.0000_03   TBD
+    - Add a write() method to Graphics::Grid.
+
 0.0000_02   2018-04-10
     - Add a grid_driver() method to the function interface.
 
