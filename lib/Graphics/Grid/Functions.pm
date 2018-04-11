@@ -47,7 +47,7 @@ sub grid_draw {
 }
 
 sub grid_write {
-    $grid->driver->write(@_);
+    $grid->write(@_);
 }
 
 fun grid_driver(:$driver='Cairo', %rest) {

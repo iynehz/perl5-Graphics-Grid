@@ -426,6 +426,16 @@ method _set_vptree( $vptree = $self->_current_vptree ) {
     $self->_push_gp( grep { defined $_ } map { $_->gp } @$path );
 }
 
+=method write($filename)
+
+Write to file.
+
+=cut
+
+method write($filename) {
+    $self->driver->write($filename);
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;
@@ -445,6 +455,7 @@ __END__
             Graphics::Grid::Viewport->new(width => 0.5, height => 0.5));
 
     $grid->rect(gp => Graphics::Grid::GPar->new(col => 'blue'));
+    $grid->write("foo.png");
 
 =head1 DESCRIPTION
 
