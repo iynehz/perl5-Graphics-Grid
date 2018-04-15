@@ -492,12 +492,13 @@ standard "plot" system.
 
 It has a "unit" system. a "unit" is basically a numerical value plus a
 unit. The default unit is "npc" (Normalised Parent Coordinates), which
-describes an object's position or dimension relative to those of the parent
-viewport. So when defining a grob, for example a rectangle, usually you do
-not specify its (x, y) position or width or height in absolute values,
-instead you specify its relative position, and width and height in ratio
-to the viewport on which the rectangle is drawn. Beause of this design,
-it's easy to adapt a plot to various types and sizes of graphics devices. 
+describes an object's position or dimension either in relative to those
+of the parent viewport or be absolute. So when defining a grob, for
+example for a rectangle you can specify its (x, y) position or width or
+heightha relative to a viewport, although absolute values are also
+possible and you can combine relative and absolute values. Beause of
+this design, it's easy to adapt a plot to various types and sizes of
+graphics devices. 
 
 =item *
 
@@ -533,6 +534,12 @@ Support canvas resize.
 =item *
 
 Support R pch symbols for points grob. 
+
+=item * 
+
+Support expressions for Unit. For example in R one can do
+
+    unit("1", "npc") + unit("2", "cm")
 
 =item *
 

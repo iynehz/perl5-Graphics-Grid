@@ -6,7 +6,7 @@ Graphics::Grid - An incomplete port of the R "grid" library to Perl
 
 # VERSION
 
-version 0.0000\_02
+version 0.0001
 
 # SYNOPSIS
 
@@ -20,6 +20,7 @@ $grid->push_viewport(
         Graphics::Grid::Viewport->new(width => 0.5, height => 0.5));
 
 $grid->rect(gp => Graphics::Grid::GPar->new(col => 'blue'));
+$grid->write("foo.png");
 ```
 
 # DESCRIPTION
@@ -52,12 +53,13 @@ the full possibilities of customization which cannot be done with R's
 standard "plot" system.
 - It has a "unit" system. a "unit" is basically a numerical value plus a
 unit. The default unit is "npc" (Normalised Parent Coordinates), which
-describes an object's position or dimension relative to those of the parent
-viewport. So when defining a grob, for example a rectangle, usually you do
-not specify its (x, y) position or width or height in absolute values,
-instead you specify its relative position, and width and height in ratio
-to the viewport on which the rectangle is drawn. Beause of this design,
-it's easy to adapt a plot to various types and sizes of graphics devices. 
+describes an object's position or dimension either in relative to those
+of the parent viewport or be absolute. So when defining a grob, for
+example for a rectangle you can specify its (x, y) position or width or
+heightha relative to a viewport, although absolute values are also
+possible and you can combine relative and absolute values. Beause of
+this design, it's easy to adapt a plot to various types and sizes of
+graphics devices. 
 - Similar to many stuffs in the R world, parameters to the R "grid" library
 are vectorized. This means a single rectangular "grob" object can actually
 contain information for multiple rectangles. 
@@ -156,12 +158,22 @@ and draw a rectangular grob.
 - null
 - zero
 
+## write($filename)
+
+Write to file.
+
 # TODOS
 
 Including but not limited to,
 
 - Support canvas resize.
 - Support R pch symbols for points grob. 
+- Support expressions for Unit. For example in R one can do
+
+    ```
+    unit("1", "npc") + unit("2", "cm")
+    ```
+
 - Cache things to speed up the drawing.
 
 # ACKNOWLEDGEMENT
