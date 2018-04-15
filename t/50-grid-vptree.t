@@ -10,7 +10,7 @@ use boolean;
 use Graphics::Grid;
 use Graphics::Grid::ViewportTree;
 
-my $grid = Graphics::Grid->singleton;
+my $grid = Graphics::Grid->new;
 my ( $a, $b, $c, $d, $e, $f, $g ) =
   map { Graphics::Grid::Viewport->new( name => $_ ) } ( 'A' .. 'G' );
 

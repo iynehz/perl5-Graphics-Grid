@@ -1,3 +1,4 @@
+## Please see file perltidy.ERR
 package Graphics::Grid::Functions;
 
 # ABSTRACT: Function interface for Graphics::Grid
@@ -28,7 +29,7 @@ our @EXPORT_OK = (
 
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
-my $grid = Graphics::Grid->singleton;
+my $grid = Graphics::Grid->new;    # global object
 
 sub unit {
     return Graphics::Grid::Unit->new(@_);
@@ -50,13 +51,14 @@ sub grid_write {
     $grid->write(@_);
 }
 
-fun grid_driver(:$driver='Cairo', %rest) {
-    if ($driver->DOES('Graphics::Grid::Driver')) {
+fun grid_driver( :$driver = 'Cairo', %rest ) {
+    if ( $driver->DOES('Graphics::Grid::Driver') ) {
         $grid->driver($driver);
-    } else {
+    }
+    else {
         my $cls = "Graphics::Grid::Driver::$driver";
         load $cls;
-        $grid->driver($cls->new(%rest));
+        $grid->driver( $cls->new(%rest) );
     }
     return $grid->driver;
 }
@@ -121,7 +123,9 @@ __END__
 
 =head1 DESCRIPTION
 
-This is the function interface for L<Graphics::Grid>.
+This is the function interface for L<Graphics::Grid>. In this package
+it has a global Graphics::Grid object, on which the functions are
+operated.
 
 =head1 FUNCTIONS
 
@@ -186,13 +190,13 @@ Set the device driver. If you don't run this function, the default driver
 will be effective.
 
 If C<$driver> consumes Graphics::Grid::Driver, C<$driver> is assigned to
-the grid singleton, and C<%rest> is ignored.
+the global Graphics::Grid object, and C<%rest> is ignored.
 
     grid_driver(driver => Graphics::Grid::Driver::Cairo->new(...));
 
-If C<$driver> is a string, a C<Graphics::Grid::Driver::$driver> object is
+If C<$driver> is a string, a Graphics::Grid::Driver::$driver object is
 created with C<%rest> as construction parameters, and is assigned to the
-grid singleton.
+global Graphics::Grid object.
 
     grid_driver(driver => 'Cairo', width => 800, height => 600);
 

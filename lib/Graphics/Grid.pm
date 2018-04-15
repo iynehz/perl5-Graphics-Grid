@@ -76,11 +76,6 @@ sub _build__vptree {
 
 sub _build__current_vptree { $_[0]->_vptree }
 
-classmethod singleton() {
-    state $obj = $class->new;
-    return $obj;
-}
-
 =method current_vptree($all=true)
 
 If C<$all> is a true value, it returns the whole viewport tree, whose root
