@@ -1,3 +1,4 @@
+## Please see file perltidy.ERR
 package Graphics::Grid::Unit;
 
 # ABSTRACT: A vector of unit values
@@ -11,8 +12,13 @@ use Type::Params ();
 use Types::Standard qw(Str ArrayRef Value Num);
 use namespace::autoclean;
 
-use Graphics::Grid::Util qw(points_to_cm);
 use Graphics::Grid::Types qw(:all);
+
+use overload
+  '+'      => 'plus',
+  '-'      => 'minus',
+  '*'      => 'multiply',
+  fallback => 1;
 
 around BUILDARGS => sub {
     my $orig  = shift;
@@ -110,58 +116,16 @@ C<yscale>.
 =cut
 
 has unit => (
-    is => 'ro',
-    isa =>
-      ( ArrayRef [Unit] )->plus_coercions( Str, sub { [ Unit->coerce($_) ] } ),
+    is  => 'ro',
+    isa => ( ArrayRef [UnitName] )
+      ->plus_coercions( Str, sub { [ UnitName->coerce($_) ] } ),
     coerce  => 1,
     default => sub { ['npc'] },
 );
 
-=method is_absolute_unit($unit_name)
-
-This is a class method. It tells if the given unit name is absolute or not.
-
-    my $is_absolute = Graphics::Grid::Unit->is_absolute_unit('cm');
-
-=cut
-
-classmethod is_absolute_unit($unit_name) {
-    state $check = Type::Params::compile(Unit);
-    my ($unit_name_coerced) = $check->($unit_name);
-
-    state $absolute_units = { map { $_ => 1 } qw(cm inches mm points picas) };
-    return exists( $absolute_units->{$unit_name_coerced} );
-}
-
-=method elems()
-
-Get the number of effective values in the object.
-
-=cut
-
-method elems() {
-    return scalar( @{ $self->value } );
-}
-
-=method value_at($idx)
-
-Get value at given index. C<$idx> is applied like wrap-indexing.
-    
-=cut
-
-method value_at($idx) {
-    return $self->value->[ $idx % scalar( @{ $self->value } ) ];
-}
-
-=method unit_at($idx)
-
-Get unit at given index. C<$idx> is applied like wrap-indexing.
-
-=cut
-
-method unit_at($idx) {
-    return $self->unit->[ $idx % scalar( @{ $self->unit } ) ];
-}
+with qw(
+  Graphics::Grid::UnitLike
+);
 
 =method at($idx)
 
@@ -182,16 +146,69 @@ C<$idx> is applied like wrap-indexing. So below are same as above.
 =cut
 
 method at($idx) {
-    return ref($self)->new(
-        value => $self->value_at($idx),
-        unit  => $self->unit_at($idx)
+    my ( $value, $unit ) =
+      map { $self->$_->[ $idx % scalar( @{ $self->$_ } ) ]; } qw(value unit);
+    return __PACKAGE__->new( value => $value, unit => $unit );
+}
+
+=method elems
+
+Number of effective values in the object.
+
+=cut
+
+method elems() {
+    return scalar( @{ $self->value } );
+}
+
+=method is_absolute_unit($unit_name)
+
+This is a class method. It tells if the given unit name is absolute or not.
+
+    my $is_absolute = Graphics::Grid::Unit->is_absolute_unit('cm');
+
+=cut
+
+classmethod is_absolute_unit($unit_name) {
+    state $check = Type::Params::compile(UnitName);
+    my ($unit_name_coerced) = $check->($unit_name);
+
+    state $absolute_units = { map { $_ => 1 } qw(cm inches mm points picas) };
+    return exists( $absolute_units->{$unit_name_coerced} );
+}
+
+=method stringify
+
+Stringify the object.
+
+=cut
+
+method stringify() {
+    return join(
+        ', ',
+        map {
+            my $u = $self->at($_);
+            sprintf( "%s%s", $u->value->[0], $u->unit->[0] );
+        } ( 0 .. $self->elems - 1 )
     );
 }
 
-method stringify() {
-    local $Data::Dumper::Indent = 0;
-    local $Data::Dumper::Terse = 1;
-    return Dumper( $self->value ) . ' x ' . Dumper( $self->unit );
+method _make_operation( $op, $other, $swap = undef ) {
+    require Graphics::Grid::UnitArithmetic;
+    return Graphics::Grid::UnitArithmetic->new( node => $self )
+      ->_make_operation( $op, $other, $swap );
+}
+
+method plus( UnitLike $other, $swap = undef ) {
+    return $self->_make_operation( '+', $other, $swap );
+}
+
+method minus( UnitLike $other, $swap = undef ) {
+    return $self->_make_operation( '-', $other, $swap );
+}
+
+method multiply( ( ArrayRef [Num] | Num ) $other, $swap = undef ) {
+    return $self->_make_operation( '*', $other, $swap );
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -222,8 +239,8 @@ __END__
     
 =head1 DESCRIPTION
 
-A Graphics::Grid::Unit object is an array ref of unit values. A unit value is
-a single numeric value with an associated unit.
+A Graphics::Grid::Unit object is an array ref of unit values. A unit value
+is a single numeric value with an associated unit.
 
 =head1 CONSTRUCTOR
 
@@ -242,7 +259,32 @@ So below are all equivalent,
     Graphics::Grid::Unit->new(value => 42, unit => "npc");
     Graphics::Grid::Unit->new(value => [42], unit => ["npc"]);
 
+=head1 ARITHMETIC
+
+Several arithmetic operations, C<+>, C<->, and C<*>, are supported on
+Graphics::Grid::Unit objects.
+
+    use Graphics::Grid::Functions qw(:all);
+
+    # 1cm+0.5npc, 2cm+0.5npc, 3cm+0.5npc
+    my $ua1 = unit([1,2,3], "cm") + unit(0.5);
+
+    # 1cm*2, 2cm*2, 3cm*2
+    my $ua2 = unit([1,2,3], "cm") * 2;
+
+A plus or minus operation requires both its binary operands are consumers
+of Graphics::Grid::UnitLike. The multiply operation requires one of
+its operands is consumer of Graphics::Grid::UnitLike, the other
+a number or array ref of numbers.
+
+Return value of an operation is an object of
+Graphics::Grid::UnitArithmetic.
+
 =head1 SEE ALSO
 
 L<Graphics::Grid>
+
+L<Graphics::Grid::UnitLike>
+
+L<Graphics::Grid::UnitArithmetic>
 

@@ -15,7 +15,7 @@ package _Test::Graphics::Grid::Driver {
 
     BEGIN {
         for my $func (
-            ( map { "draw_$_" } qw(circle points polyline polygon rect text) ),
+            ( map { "draw_$_" } qw(circle points polyline polygon rect segments text) ),
             qw(data write)
           )
         {

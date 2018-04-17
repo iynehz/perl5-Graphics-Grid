@@ -29,7 +29,7 @@ Similar to the C<width> attribute except that it is for height.
 
 has [qw(width height)] => (
     is      => 'ro',
-    isa     => ValueWithUnit,
+    isa     => UnitLike,
     coerce  => 1,
     default => sub { Graphics::Grid::Unit->new(1); },
 );

@@ -32,14 +32,14 @@ A Graphics::Grid::Unit object specifying the stopping y-values of the line segme
 
 has [qw(x0 y0)] => (
     is      => 'ro',
-    isa     => ValueWithUnit,
+    isa     => UnitLike,
     coerce  => 1,
     default => sub { Graphics::Grid::Unit->new(0) }
 );
 
 has [qw(x1 y1)] => (
     is      => 'ro',
-    isa     => ValueWithUnit,
+    isa     => UnitLike,
     coerce  => 1,
     default => sub { Graphics::Grid::Unit->new(1) }
 );
@@ -63,32 +63,8 @@ method _build_elems() {
     return List::AllUtils::max( map { $self->$_->elems } qw(x0 y0 x1 y1) );
 }
 
-method _to_polyline() {
-    my @x_value =
-      map { ( $self->x0->value_at($_), $self->x1->value_at($_) ) }
-      ( 0 .. $self->elems - 1 );
-    my @x_unit =
-      map { ( $self->x0->unit_at($_), $self->x1->unit_at($_) ) }
-      ( 0 .. $self->elems - 1 );
-    my @y_value =
-      map { ( $self->y0->value_at($_), $self->y1->value_at($_) ) }
-      ( 0 .. $self->elems - 1 );
-    my @y_unit =
-      map { ( $self->y0->unit_at($_), $self->y1->unit_at($_) ) }
-      ( 0 .. $self->elems - 1 );
-    my $id = [ map { ( $_, $_ ) } ( 0 .. $self->elems - 1 ) ];
-
-    my %params = (
-        x  => Graphics::Grid::Unit->new( \@x_value, \@x_unit ),
-        y  => Graphics::Grid::Unit->new( \@y_value, \@y_unit ),
-        id => $id,
-        ( map { $_ => $self->$_ } grep { defined $self->$_ } qw(gp vp) )
-    );
-    return Graphics::Grid::Grob::Polyline->new(%params);
-}
-
 method draw($driver) {
-    $driver->draw_polyline( $self->_to_polyline );
+    $driver->draw_segments($self);
 }
 
 __PACKAGE__->meta->make_immutable;

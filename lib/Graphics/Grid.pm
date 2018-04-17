@@ -535,12 +535,6 @@ Support canvas resize.
 
 Support R pch symbols for points grob. 
 
-=item * 
-
-Support expressions for Unit. For example in R one can do
-
-    unit("1", "npc") + unit("2", "cm")
-
 =item *
 
 Cache things to speed up the drawing.

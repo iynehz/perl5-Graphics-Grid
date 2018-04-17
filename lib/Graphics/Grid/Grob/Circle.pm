@@ -28,7 +28,7 @@ For this module C<elems> returns the number of circles.
 
 has r => (
     is      => 'ro',
-    isa     => ValueWithUnit,
+    isa     => UnitLike,
     coerce  => 1,
     default => sub { Graphics::Grid::Unit->new(0.5) }
 );

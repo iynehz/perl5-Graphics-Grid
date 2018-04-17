@@ -9,7 +9,8 @@ use warnings;
 
 use Ref::Util qw(is_plain_arrayref);
 use Type::Library -base, -declare => qw(
-  ValueWithUnit Unit GPar
+  UnitName Unit UnitArithmetic UnitLike
+  GPar
   PlottingCharacter
   LineType LineEnd LineJoin
   FontFace
@@ -20,8 +21,16 @@ use Type::Library -base, -declare => qw(
 use Type::Utils -all;
 use Types::Standard -types;
 
-class_type ValueWithUnit, { class => 'Graphics::Grid::Unit' };
-coerce ValueWithUnit,
+
+class_type Unit, { class => 'Graphics::Grid::Unit' };
+coerce Unit,
+  from Value,    via { 'Graphics::Grid::Unit'->new($_) },
+  from ArrayRef, via { 'Graphics::Grid::Unit'->new($_) };
+
+class_type UnitArithmetic, { class => 'Graphics::Grid::UnitArithmetic' };
+
+declare UnitLike, as ConsumerOf["Graphics::Grid::UnitLike"];
+coerce UnitLike,
   from Value,    via { 'Graphics::Grid::Unit'->new($_) },
   from ArrayRef, via { 'Graphics::Grid::Unit'->new($_) };
 
@@ -64,8 +73,8 @@ coerce Justification, from Str, via {
 
 # For unit with multiple names, like "inches" and "in", we directly support
 #  only one of its names, and handle other names via coercion.
-declare Unit, as Enum [qw(npc cm inches mm points picas char native)];
-coerce Unit, from Str, via {
+declare UnitName, as Enum [qw(npc cm inches mm points picas char native)];
+coerce UnitName, from Str, via {
     state $mapping;
     unless ($mapping) {
         $mapping = {

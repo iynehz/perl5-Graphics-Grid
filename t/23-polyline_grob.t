@@ -12,8 +12,9 @@ use Graphics::Grid::Grob::Segments;
 
 my @cases_constructor_polyline = (
     {
-        params => {},
-        elems  => 1,
+        params     => {},
+        elems      => 1,
+        unique_ids => [0],
     },
     {
         params => {
@@ -35,7 +36,8 @@ my @cases_constructor_polyline = (
                 lwd => 3
             ),
         },
-        elems => 5,
+        elems      => 5,
+        unique_ids => [ 1 .. 5 ],
     },
     {    # nothing for id
         params => {
@@ -56,7 +58,8 @@ my @cases_constructor_polyline = (
                 lwd => 3
             ),
         },
-        elems => 1,
+        elems      => 1,
+        unique_ids => [0],
     },
 );
 
@@ -64,6 +67,28 @@ for my $case (@cases_constructor_polyline) {
     my $grob = Graphics::Grid::Grob::Polyline->new( %{ $case->{params} } );
     ok( $grob, 'polyline constructor' );
     is( $grob->elems, $case->{elems}, '$grob->elems is ' . $case->{elems} );
+
+    if ( exists $case->{unique_ids} ) {
+        is( $grob->unique_ids, $case->{unique_ids}, 'unique_ids()' );
+    }
+}
+
+{
+    my $grob = Graphics::Grid::Grob::Polyline->new(
+        %{ $cases_constructor_polyline[1]->{params} } );
+    my %indexes_by_id =
+      map { $_ => $grob->indexes_by_id($_) } ( @{ $grob->unique_ids } );
+    is(
+        \%indexes_by_id,
+        {
+            1 => [ 0, 5, 10, 15 ],
+            2 => [ 1, 6, 11, 16 ],
+            3 => [ 2, 7, 12, 17 ],
+            4 => [ 3, 8, 13, 18 ],
+            5 => [ 4, 9, 14, 19 ]
+        },
+        'indexes_by_id()'
+    );
 }
 
 my @cases_constructor_lines = (

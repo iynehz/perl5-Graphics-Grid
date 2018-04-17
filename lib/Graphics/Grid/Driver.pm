@@ -27,9 +27,9 @@ Default is 1000.
 =cut
 
 has [ 'width', 'height' ] => (
-    is       => 'rw',
-    isa      => Num,
-    default  => 1000,
+    is      => 'rw',
+    isa     => Num,
+    default => 1000,
 );
 
 =attr dpi
@@ -76,6 +76,7 @@ requires 'draw_points';
 requires 'draw_polygon';
 requires 'draw_polyline';
 requires 'draw_rect';
+requires 'draw_segments';
 requires 'draw_text';
 
 sub default_gpar {
@@ -98,26 +99,64 @@ sub default_gpar {
 }
 
 method _transform_width_to_cm(
-    $unit, $idx, $gp,
+    $unitlike, $idx, $gp,
     $vp_width_cm  = $self->_current_vp_width_cm,
     $vp_height_cm = $self->_current_vp_height_cm
   )
 {
-    return $self->_transform_to_cm( $unit, $idx, $gp, $vp_width_cm );
+    return $self->_transform_to_cm( $unitlike, $idx, $gp, $vp_width_cm );
 }
 
 method _transform_height_to_cm(
-    $unit, $idx, $gp,
+    $unitlike, $idx, $gp,
     $vp_width_cm  = $self->_current_vp_width_cm,
     $vp_height_cm = $self->_current_vp_height_cm
   )
 {
-    return $self->_transform_to_cm( $unit, $idx, $gp, $vp_height_cm );
+    return $self->_transform_to_cm( $unitlike, $idx, $gp, $vp_height_cm );
 }
 
-classmethod _transform_to_cm( $unit, $idx, $gp, $length_cm ) {
-    my $value = $unit->value_at($idx);
-    my $unit  = $unit->unit_at($idx);
+classmethod _transform_to_cm( $unitlike, $idx, $gp, $length_cm ) {
+    if ( $unitlike->$_isa('Graphics::Grid::UnitArithmetic') ) {
+        return $class->_transform_unitlike_to_cm( $unitlike, $idx, $gp,
+            $length_cm );
+    }
+    else {    # Graphics::Grid::Unit
+        return $class->_transform_unit_to_cm( $unitlike, $idx, $gp,
+            $length_cm );
+    }
+}
+
+classmethod _transform_unitlike_to_cm( $unitlike, $idx, $gp, $length_cm ) {
+    if ( $unitlike->is_unit ) {
+        return $class->_transform_unit_to_cm( $unitlike->node, $idx, $gp,
+            $length_cm );
+    }
+    elsif ( $unitlike->is_number ) {
+        return $unitlike->node->[ $idx % scalar( @{ $unitlike->node } ) ];
+    }
+    else {    # is_arithmetic
+        my $op = $unitlike->node;
+        my ( $arg0, $arg1 ) = map {
+            $class->_transform_unitlike_to_cm( $unitlike->children->[$_],
+                $idx, $gp, $length_cm )
+        } qw(0 1);
+        if ( $op eq '+' ) {
+            return $arg0 + $arg1;
+        }
+        elsif ( $op eq '-' ) {
+            return $arg0 - $arg1;
+        }
+        else {    # *
+            return $arg0 * $arg1;
+        }
+    }
+}
+
+classmethod _transform_unit_to_cm( $unit, $idx, $gp, $length_cm ) {
+    my $unit_single = $unit->at($idx);
+    my $value       = $unit_single->value->[0];
+    my $unit        = $unit_single->unit->[0];
 
     if ( $unit eq 'npc' ) {
         return $value * $length_cm;

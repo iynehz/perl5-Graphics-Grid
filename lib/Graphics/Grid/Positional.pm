@@ -33,7 +33,7 @@ The reference point is the left-bottom of parent viewport.
 
 has [qw(x y)] => (
     is      => 'ro',
-    isa     => ValueWithUnit,
+    isa     => UnitLike,
     coerce  => 1,
     default => sub { Graphics::Grid::Unit->new(0.5) },
 );

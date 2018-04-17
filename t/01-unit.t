@@ -7,6 +7,11 @@ use Test2::V0;
 
 use Graphics::Grid::Unit;
 
+ok(
+    Graphics::Grid::Unit->DOES('Graphics::Grid::UnitLike'),
+    'Graphics::Grid::Unit DOES Graphics::Grid::UnitLike'
+);
+
 my @cases_constructor = (
     {
         params => [42],

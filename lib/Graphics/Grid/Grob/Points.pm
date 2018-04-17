@@ -44,7 +44,7 @@ Default to C<unit(1, "char")>.
 =cut
 
 has size => (
-    isa     => ValueWithUnit,
+    isa     => Unit,
     coerce  => 1,
     default => sub { Graphics::Grid::Unit->new( 1, "char" ) },
 );

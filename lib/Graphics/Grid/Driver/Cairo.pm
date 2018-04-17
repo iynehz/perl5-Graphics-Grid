@@ -293,20 +293,45 @@ method draw_rect($rect_grob) {
     }
 }
 
+my $path_func_lines = fun( $c, $points ) {
+    $c->new_path;
+    my $start_point = shift @$points;
+    $c->move_to(@$start_point);
+    for my $point (@$points) {
+        $c->line_to(@$point);
+    }
+};
+
+method draw_segments($segments_grob) {
+    my $ctx = $self->cairo;
+
+    my $gp = $self->current_gp;
+
+    for my $idx ( 0 .. $segments_grob->elems - 1 ) {
+        my ( $x0, $x1 ) =
+          map {
+            $self->_transform_width_to_cm( $segments_grob->$_, $idx, $gp );
+          } qw(x0 x1);
+        my ( $y0, $y1 ) =
+          map {
+            $self->_transform_height_to_cm( $segments_grob->$_, $idx, $gp );
+          } qw(y0 y1);
+
+        my @points_cm = ( [ $x0, $y0 ], [ $x1, $y1 ] );
+
+        $self->_draw_shape(
+            $gp->at($idx),
+            fun($c)
+            {
+                $path_func_lines->( $c, \@points_cm );
+            },
+            false,
+        );
+    }
+}
+
 method draw_polyline($polyline_grob) {
-    $self->_draw_polyline(
-        $polyline_grob,
-        fun( $c, $points )
-        {
-            $c->new_path;
-            my $start_point = shift @$points;
-            $c->move_to(@$start_point);
-            for my $point (@$points) {
-                $c->line_to(@$point);
-            }
-        },
-        false
-    );
+    $self->_draw_polyline( $polyline_grob, $path_func_lines, false );
 }
 
 method draw_polygon($polygon_grob) {
@@ -331,17 +356,17 @@ method _draw_polyline( $polyline_grob, $path_func, $is_fill = false ) {
 
     my $gp = $self->current_gp;
 
-    for my $idx ( 0 .. $polyline_grob->elems - 1 ) {
-        my $points = $polyline_grob->get_points($idx);
-
-        my $unit_x = $points->{x};
-        my $unit_y = $points->{y};
+    my $unique_ids = $polyline_grob->unique_ids;
+    for my $idx ( 0 .. $#{$unique_ids} ) {
+        my $id      = $unique_ids->[$idx];
+        my $indexes = $polyline_grob->indexes_by_id($id);
 
         my @points_cm = map {
-            my $x = $self->_transform_width_to_cm( $unit_x, $_, $gp );
-            my $y = $self->_transform_height_to_cm( $unit_y, $_, $gp );
+            my $x = $self->_transform_width_to_cm( $polyline_grob->x, $_, $gp );
+            my $y =
+              $self->_transform_height_to_cm( $polyline_grob->y, $_, $gp );
             [ $x, $y ];
-        } ( 0 .. $unit_x->elems - 1 );
+        } @$indexes;
 
         $self->_draw_shape(
             $gp->at($idx),

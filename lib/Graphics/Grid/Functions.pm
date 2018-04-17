@@ -1,4 +1,3 @@
-## Please see file perltidy.ERR
 package Graphics::Grid::Functions;
 
 # ABSTRACT: Function interface for Graphics::Grid

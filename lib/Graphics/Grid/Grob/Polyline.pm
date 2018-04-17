@@ -55,11 +55,18 @@ has id => ( isa => ArrayRef [Int] );
 # TODO
 # has arrow => ( isa => ArrayRef[$Arrow] );
 
-has _points_by_idx => (
+has _indexes_by_id => (
     is       => 'ro',
     lazy     => 1,
-    builder  => '_build__points_by_idx',
+    builder  => '_build__indexes_by_id',
     init_arg => undef
+);
+
+has _ids => (
+    is       => 'ro',
+    lazy     => 1,
+    builder  => '_build__ids',
+    init_arg => undef,
 );
 
 with qw(
@@ -84,44 +91,58 @@ C<id>) of a object.
 =cut
 
 method _build_elems() {
-    unless ( $self->has_id ) {
-        return 1;
-    }
-    return scalar( uniq( @{ $self->id } ) );
+    return scalar( @{ $self->_ids } );
 }
 
-method _build__points_by_idx() {
+method _build__ids() {
     if ( !$self->has_id ) {
-        return { 0 => { x => $self->x, y => $self->y } };
+        return [0];
     }
     else {
-        my %points_by_id;
-        for my $i ( 0 .. $self->x->elems - 1 ) {
-            my $id = $self->id->[$i];
-            $points_by_id{$id} //= [];
-            push @{ $points_by_id{$id} },
-              [ $self->x->at($i), $self->y->at($i) ];
-        }
-
-        my @ids_sorted = sort keys %points_by_id;
-        my %points_by_idx =
-          map {
-            my $id = $_;
-            my $points  = $points_by_id{ $ids_sorted[$id] };
-            my @x       = map { $_->[0] } @$points;
-            my @x_value = map { $_->value_at(0); } @x;
-            my @x_unit  = map { $_->unit_at(0); } @x;
-            my @y       = map { $_->[1] } @$points;
-            my @y_value = map { $_->value_at(0); } @y;
-            my @y_unit  = map { $_->unit_at(0); } @y;
-
-            $id => {
-                x => Graphics::Grid::Unit->new( \@x_value, \@x_unit ),
-                y => Graphics::Grid::Unit->new( \@y_value, \@y_unit ),
-            };
-          } ( 0 .. $#ids_sorted );
-        return \%points_by_idx;
+        my @ids = uniq( @{ $self->id } );
+        return \@ids;
     }
+}
+
+method _build__indexes_by_id() {
+    if ( !$self->has_id ) {
+        return { 0 => [ 0 .. $self->x->elems - 1 ] };
+    }
+    else {
+        my %indexes_by_id = map { $_ => [] } @{ $self->id };
+        for my $idx ( 0 .. $#{ $self->id } ) {
+            my $id = $self->id->[$idx];
+            push @{ $indexes_by_id{$id} }, $idx;
+        }
+        return \%indexes_by_id;
+    }
+}
+
+=method indexes_by_id($id)
+
+Get unit indexes of attributes C<x>, C<y>, C<id>, for a given id.
+
+Returns an array ref.
+
+=cut
+
+method indexes_by_id($id) {
+    return $self->_indexes_by_id->{$id};
+}
+
+=method unique_ids
+
+Return an array ref of unique ids.
+
+=cut
+
+method unique_ids() {
+    return $self->_ids;
+}
+
+method get_idx_by_id($id) {
+    my @indexes = map { $_ == $id } @{ $self->id };
+    return \@indexes;
 }
 
 method _has_param($name) {
@@ -143,11 +164,6 @@ method validate() {
     if ( $self->has_id and $x_size != scalar( @{ $self->id } ) ) {
         die "'x', 'y' and 'id' must have the same length";
     }
-}
-
-method get_points($idx) {
-    my $points_by_idx = $self->_points_by_idx;
-    return $points_by_idx->{$idx};
 }
 
 method draw($driver) {
