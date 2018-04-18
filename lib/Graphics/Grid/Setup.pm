@@ -13,14 +13,12 @@ use feature ':5.14';
 use Import::Into;
 
 use Carp;
-use Data::Dumper              ();
-use Function::Parameters      ();
+use Data::Dumper ();
+use Function::Parameters 2.0;
 use Safe::Isa                 ();
 use boolean                   ();
 use Moose                     ();
 use Moose::Role               ();
-#use MooseX::Aliases           ();
-#use MooseX::LazyRequire       ();
 use MooseX::StrictConstructor ();
 
 use List::AllUtils qw(uniq);
@@ -63,8 +61,6 @@ sub _import_tag {
         Function::Parameters->import::into( $target, qw(classmethod) );
 
         Moose->import::into($target);
-#        MooseX::Aliases->import::into($target);
-#        MooseX::LazyRequire->import::into($target);
         MooseX::StrictConstructor->import::into($target);
     }
     elsif ( $tag eq ':role' ) {
@@ -73,8 +69,6 @@ sub _import_tag {
         Function::Parameters->import::into( $target, qw(classmethod) );
 
         Moose::Role->import::into($target);
-#        MooseX::Aliases->import::into($target);
-#        MooseX::LazyRequire->import::into($target);
     }
     else {
         croak qq["$tag" is not exported by the $class module\n];
