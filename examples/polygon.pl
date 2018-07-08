@@ -21,7 +21,7 @@ grid_polygon(
         ( map { $_ / 10 } ( 0 .. 4 ) ),
     ],
     id => [ ( 1 .. 5 ) x 4 ],
-    gp => Graphics::Grid::GPar->new(
+    gp => gpar(
         fill => [qw(black red green3 blue cyan)],
     )
 );

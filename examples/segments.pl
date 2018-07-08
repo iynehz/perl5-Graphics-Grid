@@ -12,7 +12,7 @@ grid_segments(
     x1 => [ 1, 1 ],
     y0 => [ 0, 1 ],
     y1 => [ 1, 0 ],
-    gp => Graphics::Grid::GPar->new(
+    gp => gpar(
         col => [qw(black red)],
         lwd => 3
     ),

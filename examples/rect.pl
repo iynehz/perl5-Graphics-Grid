@@ -9,7 +9,7 @@ use Graphics::Grid::Functions qw(:all);
 grid_rect(
     height => unit(1) - unit( 1, "cm" ),
     width  => unit(1) - unit( 1, "cm" ),
-    gp => Graphics::Grid::GPar->new( col => 'blue', lwd => 1 / 2.54 * 96 ),
+    gp => gpar( col => 'blue', lwd => 1 / 2.54 * 96 ),
 );
 grid_write("rect.png");
 
