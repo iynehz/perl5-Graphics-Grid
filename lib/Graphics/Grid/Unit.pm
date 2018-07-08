@@ -1,4 +1,3 @@
-## Please see file perltidy.ERR
 package Graphics::Grid::Unit;
 
 # ABSTRACT: A vector of unit values
@@ -145,21 +144,21 @@ C<$idx> is applied like wrap-indexing. So below are same as above.
 
 =cut
 
-method at($idx) {
+method at ($idx) {
     my ( $value, $unit ) =
       map { $self->$_->[ $idx % scalar( @{ $self->$_ } ) ]; } qw(value unit);
     return __PACKAGE__->new( value => $value, unit => $unit );
 }
 
-=method elems
-
-Number of effective values in the object.
+=include attr_elems@Graphics::Grid::UnitLike
 
 =cut
 
-method elems() {
+method elems () {
     return scalar( @{ $self->value } );
 }
+
+method length () { $self->elems; }
 
 =method is_absolute_unit($unit_name)
 
@@ -169,7 +168,7 @@ This is a class method. It tells if the given unit name is absolute or not.
 
 =cut
 
-classmethod is_absolute_unit($unit_name) {
+classmethod is_absolute_unit ($unit_name) {
     state $check = Type::Params::compile(UnitName);
     my ($unit_name_coerced) = $check->($unit_name);
 
@@ -183,7 +182,7 @@ Stringify the object.
 
 =cut
 
-method stringify() {
+method stringify () {
     return join(
         ', ',
         map {
@@ -193,21 +192,21 @@ method stringify() {
     );
 }
 
-method _make_operation( $op, $other, $swap = undef ) {
+method _make_operation ( $op, $other, $swap = undef ) {
     require Graphics::Grid::UnitArithmetic;
     return Graphics::Grid::UnitArithmetic->new( node => $self )
       ->_make_operation( $op, $other, $swap );
 }
 
-method plus( UnitLike $other, $swap = undef ) {
+method plus ( UnitLike $other, $swap = undef ) {
     return $self->_make_operation( '+', $other, $swap );
 }
 
-method minus( UnitLike $other, $swap = undef ) {
+method minus ( UnitLike $other, $swap = undef ) {
     return $self->_make_operation( '-', $other, $swap );
 }
 
-method multiply( ( ArrayRef [Num] | Num ) $other, $swap = undef ) {
+method multiply ( ( ArrayRef [Num] | Num ) $other, $swap = undef ) {
     return $self->_make_operation( '*', $other, $swap );
 }
 

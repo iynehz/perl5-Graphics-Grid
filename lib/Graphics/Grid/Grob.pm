@@ -37,6 +37,10 @@ Get number of sub-elements in the grob.
 Grob classes shall implement a C<_build_elems()> method to support this
 attribute.
 
+=method length
+
+This is an alias of C<elems>.
+
 =tmpl 
 
 =cut

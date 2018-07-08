@@ -2,6 +2,7 @@ Revision history
 
 0.0001_01   2018-07-08
     - Remove MooseX::HasDefaults::RO as dependency.
+    - Add length() method as alias of elems() in Grob and UnitLike roles.
 
 0.0001      2018-04-18
     - First release.

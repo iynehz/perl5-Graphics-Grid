@@ -127,9 +127,7 @@ method at($idx) {
     }
 }
 
-=method elems
-
-Return the number of effective elements in the object.
+=include attr_elems@Graphics::Grid::UnitLike
 
 =cut
 
@@ -143,7 +141,7 @@ method elems() {
     else {
         return List::AllUtils::max( map { $_->elems } @{ $self->children } );
     }
-};
+}
 
 =method is_unit
 

@@ -8,13 +8,23 @@ use Graphics::Grid::Role;
 
 use Graphics::Grid::Types qw(:all);
 
+=tmpl attr_elems
+
 =method elems
 
 Number of effective values in the object.
 
+=method length
+
+This is an alias of C<elems()>.
+
+=tmpl
+
 =cut
 
 requires 'elems';
+
+method length() { $self->elems; }
 
 =method at
 
