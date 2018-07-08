@@ -3,7 +3,6 @@ package Graphics::Grid::Viewport;
 # ABSTRACT: Viewport
 
 use Graphics::Grid::Class;
-use MooseX::HasDefaults::RO;
 
 # VERSION
 
@@ -42,10 +41,10 @@ Default is C<[0, 1]>.
 my $Scale = ( ArrayRef [Num] )->where( sub { @$_ == 2 } );
 
 has [ "xscale", "yscale" ] => (
+    is      => 'ro',
     isa     => $Scale,
     default => sub { [ 0, 1 ] },
 );
-
 
 # TODO
 
@@ -62,7 +61,11 @@ positive x-axis. Default is 0.
 
 =cut
 
-has angle => ( isa => Num, default => 0 );
+has angle => (
+    is      => 'ro',
+    isa     => Num,
+    default => 0
+);
 
 #has layout         => ();
 #has layout_pos_row => ();
@@ -76,12 +79,14 @@ viewport tree. If not specified, it would be assigned automatically.
 =cut
 
 has name => (
+    is      => 'ro',
     isa     => Str,
     lazy    => 1,
     builder => '_build_name',
 );
 
 has _uid => (
+    is      => 'ro',
     default => sub {
         state $idx = 0;
         my $name = "GRID.VP.$idx";

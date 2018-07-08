@@ -3,11 +3,11 @@ package Graphics::Grid::Grob::Segments;
 # ABSTRACT: Line segments grob
 
 use Graphics::Grid::Class;
-use MooseX::HasDefaults::RO;
 
 # VERSION
 
 use Types::Standard qw(ArrayRef Int);
+use namespace::autoclean;
 
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);

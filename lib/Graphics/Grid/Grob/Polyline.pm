@@ -3,12 +3,12 @@ package Graphics::Grid::Grob::Polyline;
 # ABSTRACT: Polyline grob
 
 use Graphics::Grid::Class;
-use MooseX::HasDefaults::RO;
 
 # VERSION
 
 use List::AllUtils qw(uniq);
 use Types::Standard qw(ArrayRef Int);
+use namespace::autoclean;
 
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);
@@ -50,7 +50,10 @@ line.
 
 =cut
 
-has id => ( isa => ArrayRef [Int] );
+has id => (
+    is  => 'ro',
+    isa => ArrayRef [Int]
+);
 
 # TODO
 # has arrow => ( isa => ArrayRef[$Arrow] );
@@ -90,11 +93,11 @@ C<id>) of a object.
 
 =cut
 
-method _build_elems() {
+method _build_elems () {
     return scalar( @{ $self->_ids } );
 }
 
-method _build__ids() {
+method _build__ids () {
     if ( !$self->has_id ) {
         return [0];
     }
@@ -104,7 +107,7 @@ method _build__ids() {
     }
 }
 
-method _build__indexes_by_id() {
+method _build__indexes_by_id () {
     if ( !$self->has_id ) {
         return { 0 => [ 0 .. $self->x->elems - 1 ] };
     }
@@ -126,7 +129,7 @@ Returns an array ref.
 
 =cut
 
-method indexes_by_id($id) {
+method indexes_by_id ($id) {
     return $self->_indexes_by_id->{$id};
 }
 
@@ -136,16 +139,16 @@ Return an array ref of unique ids.
 
 =cut
 
-method unique_ids() {
+method unique_ids () {
     return $self->_ids;
 }
 
-method get_idx_by_id($id) {
+method get_idx_by_id ($id) {
     my @indexes = map { $_ == $id } @{ $self->id };
     return \@indexes;
 }
 
-method _has_param($name) {
+method _has_param ($name) {
     my $val = $self->$name;
     return ( defined $val and @{$val} > 0 );
 }
@@ -155,7 +158,7 @@ for my $name (qw(id arrow)) {
     *{ "has_" . $name } = sub { $_[0]->_has_param($name); }
 }
 
-method validate() {
+method validate () {
     my $x_size = $self->x->elems;
     my $y_size = $self->y->elems;
     unless ( $x_size == $y_size ) {
@@ -166,7 +169,7 @@ method validate() {
     }
 }
 
-method draw($driver) {
+method draw ($driver) {
     $driver->draw_polyline($self);
 }
 

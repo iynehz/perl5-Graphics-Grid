@@ -3,11 +3,11 @@ package Graphics::Grid::Grob::Text;
 # ABSTRACT: Text grob
 
 use Graphics::Grid::Class;
-use MooseX::HasDefaults::RO;
 
 # VERSION
 
 use Types::Standard qw(Str ArrayRef Bool Num);
+use namespace::autoclean;
 
 use Graphics::Grid::Types qw(:all);
 use Graphics::Grid::Unit;
@@ -20,6 +20,7 @@ specified, these multiple strings will be drawn.
 =cut
 
 has label => (
+    is => 'ro',
     isa      => ( ArrayRef [Str] )->plus_coercions(ArrayRefFromValue),
     coerce   => 1,
     required => 1,
@@ -36,6 +37,7 @@ The angle to rotate the text.
 =cut
 
 has rot => (
+    is => 'ro',
     isa => ( ArrayRef [Num] )->plus_coercions(ArrayRefFromValue),
     coerce => 1,
     default => sub { [0] },
@@ -66,6 +68,8 @@ method _build_elems() {
 method draw($driver) {
     $driver->draw_text($self);
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;
 

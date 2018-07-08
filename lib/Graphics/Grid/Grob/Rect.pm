@@ -3,11 +3,11 @@ package Graphics::Grid::Grob::Rect;
 # ABSTRACT: Rectangular grob
 
 use Graphics::Grid::Class;
-use MooseX::HasDefaults::RO;
 
 # VERSION
 
 use List::AllUtils qw(max);
+use namespace::autoclean;
 
 =include attr_x_y@Graphics::Grid::Positional
 

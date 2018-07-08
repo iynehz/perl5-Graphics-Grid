@@ -3,9 +3,10 @@ package Graphics::Grid::Grob::Points;
 # ABSTRACT: Points grob
 
 use Graphics::Grid::Class;
-use MooseX::HasDefaults::RO;
 
 # VERSION
+
+use namespace::autoclean;
 
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);
@@ -34,7 +35,11 @@ plotting symbol to use.  See points for the interpretation of these values.
 
 =cut 
 
-has pch => ( isa => PlottingCharacter, default => 1 );
+has pch => (
+    is      => 'ro',
+    isa     => PlottingCharacter,
+    default => 1
+);
 
 =attr
 
@@ -44,6 +49,7 @@ Default to C<unit(1, "char")>.
 =cut
 
 has size => (
+    is      => 'ro',
     isa     => Unit,
     coerce  => 1,
     default => sub { Graphics::Grid::Unit->new( 1, "char" ) },
@@ -73,11 +79,11 @@ has '+y' => (
     }
 );
 
-method _build_elems() {
+method _build_elems () {
     return $self->x->elems;
 }
 
-method validate() {
+method validate () {
     unless (
         List::AllUtils::all { $self->$_->isa('Graphics::Grid::Unit') }
         qw(x y size)
@@ -93,7 +99,7 @@ method validate() {
     }
 }
 
-method draw($driver) {
+method draw ($driver) {
     $driver->draw_points($self);
 }
 

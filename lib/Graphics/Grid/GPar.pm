@@ -3,7 +3,6 @@ package Graphics::Grid::GPar;
 # ABSTRACT: Graphical parameters used in Graphics::Grid
 
 use Graphics::Grid::Class;
-use MooseX::HasDefaults::RO;
 
 # VERSION
 
@@ -21,6 +20,7 @@ my $NonNegative = Num->where( sub { $_ >= 0 } );
 
 # color properties
 has [qw(col fill)] => (
+    is  => 'ro',
     isa => (
         ( ArrayRef [Color] )->plus_coercions( Color, sub { [$_] } )
           ->plus_coercions( Str, sub { [ Color->coerce($_) ] } )
@@ -28,6 +28,7 @@ has [qw(col fill)] => (
     coerce => 1,
 );
 has alpha => (
+    is      => 'ro',
     isa     => ( ArrayRef [$ZeroToOne] )->plus_coercions(ArrayRefFromValue),
     coerce  => 1,
     default => sub { [1] },
@@ -35,57 +36,68 @@ has alpha => (
 
 # line properties
 has lty => (
-    isa => ( ArrayRef [LineType] )->plus_coercions(ArrayRefFromValue),
+    is     => 'ro',
+    isa    => ( ArrayRef [LineType] )->plus_coercions(ArrayRefFromValue),
     coerce => 1
 );
 has lwd => (
-    isa => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
+    is     => 'ro',
+    isa    => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
     coerce => 1
 );
 has lex => (
+    is      => 'ro',
     isa     => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
     coerce  => 1,
     default => sub { [1] },
 );
 has lineend => (
-    isa => ( ArrayRef [LineEnd] )->plus_coercions(ArrayRefFromValue),
+    is     => 'ro',
+    isa    => ( ArrayRef [LineEnd] )->plus_coercions(ArrayRefFromValue),
     coerce => 1
 );
 has linejoin => (
-    isa => ( ArrayRef [LineJoin] )->plus_coercions(ArrayRefFromValue),
+    is     => 'ro',
+    isa    => ( ArrayRef [LineJoin] )->plus_coercions(ArrayRefFromValue),
     coerce => 1
 );
 has linemitre => (
-    isa => ( ArrayRef [$LineMitre] )->plus_coercions(ArrayRefFromValue),
+    is     => 'ro',
+    isa    => ( ArrayRef [$LineMitre] )->plus_coercions(ArrayRefFromValue),
     coerce => 1
 );
 
 # text properties
 has fontsize => (
-    isa => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
+    is     => 'ro',
+    isa    => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
     coerce => 1
 );
 has fontfamily => (
-    isa => ( ArrayRef [Str] )->plus_coercions(ArrayRefFromValue),
+    is     => 'ro',
+    isa    => ( ArrayRef [Str] )->plus_coercions(ArrayRefFromValue),
     coerce => 1
 );
 has fontface => (
-    isa => ( ArrayRef [FontFace] )->plus_coercions(ArrayRefFromValue),
+    is     => 'ro',
+    isa    => ( ArrayRef [FontFace] )->plus_coercions(ArrayRefFromValue),
     coerce => 1
 );
 has lineheight => (
+    is     => 'ro',
     isa    => (ArrayRef)->plus_coercions(ArrayRefFromValue),
     coerce => 1
 );
 
 # other properties
 has cex => (
+    is      => 'ro',
     isa     => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
     coerce  => 1,
     default => sub { [1] },
 );
 
-classmethod names() {
+classmethod names () {
     my @names = qw(col fill alpha
       lty lwd lex lineend linejoin linemitre
       fontsize fontfamily fontface lineheight cex
@@ -93,7 +105,7 @@ classmethod names() {
     return \@names;
 }
 
-method _has_param($name) {
+method _has_param ($name) {
     my $val = $self->$name;
     return ( defined $val and @{$val} > 0 );
 }
@@ -119,7 +131,7 @@ C<$idx> is applied like wrap-indexing. So below is same as above.
 
 =cut
 
-method at($idx) {
+method at ($idx) {
     my %params = map {
         my $val =
             $self->_has_param($_)
@@ -161,7 +173,7 @@ would be padded with 1 when multiplying. That is,
 
 =cut
 
-method merge($another_gpar) {
+method merge ($another_gpar) {
     my %cumulative_names = map { $_ => 1 } qw(alpha lex cex);
 
     my %params = map {

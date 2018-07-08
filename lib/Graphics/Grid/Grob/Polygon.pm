@@ -3,11 +3,12 @@ package Graphics::Grid::Grob::Polygon;
 # ABSTRACT: Polygon grob
 
 use Graphics::Grid::Class;
-use MooseX::HasDefaults::RO;
 
 # VERSION
 
 extends qw(Graphics::Grid::Grob::Polyline);
+
+use namespace::autoclean;
 
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);
