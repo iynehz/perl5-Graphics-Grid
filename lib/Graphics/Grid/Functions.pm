@@ -13,6 +13,7 @@ use Graphics::Grid::GPar;
 use Graphics::Grid::Unit;
 use Graphics::Grid::Viewport;
 use Graphics::Grid::GTree;
+use Graphics::Grid::Grill;
 
 my @grob_types = Graphics::Grid->_grob_types();
 
@@ -22,7 +23,7 @@ our @EXPORT_OK = (
       unit gpar viewport
       grid_write grid_draw grid_driver
       push_viewport pop_viewport up_viewport down_viewport seek_viewport
-      gtree
+      gtree grill grid_grill
       ), ( map { ( "grid_${_}", "${_}_grob" ) } @grob_types )
 );
 
@@ -50,7 +51,7 @@ sub grid_write {
     $grid->write(@_);
 }
 
-fun grid_driver( :$driver = 'Cairo', %rest ) {
+fun grid_driver ( :$driver = 'Cairo', %rest ) {
     if ( $driver->DOES('Graphics::Grid::Driver') ) {
         $grid->driver($driver);
     }
@@ -66,6 +67,15 @@ sub gtree {
     return Graphics::Grid::GTree->new(@_);
 }
 
+sub grill {
+    return Graphics::Grid::Grill->new(@_);
+}
+
+sub grid_grill {
+    my $grill = Graphics::Grid::Grill->new(@_);
+    return $grid->draw($grill);
+}
+
 for my $grob_type (@grob_types) {
     my $class = 'Graphics::Grid::Grob::' . ucfirst($grob_type);
     load $class;
@@ -76,9 +86,7 @@ for my $grob_type (@grob_types) {
 
     no strict 'refs';    ## no critic
     *{ $grob_type . "_grob" } = $grob_func;
-    *{ "grid_" . $grob_type } = sub {
-        $grid->$grob_type(@_);
-    };
+    *{ "grid_" . $grob_type } = sub { $grid->$grob_type(@_); };
 }
 
 for my $method (
@@ -174,6 +182,14 @@ This creates a grob, and draws it. This is equivalent to Graphics::Grid's
 ${grob_type}(...) method.
 
 See above for possible C<$grob_type>.
+
+=head2 grill(%params)
+
+This creates a grill object.
+
+=head2 grid_grill(%params)
+
+This creates a grill object and draws it.
 
 =head2 gtree(%params)
 

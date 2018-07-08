@@ -350,49 +350,17 @@ C<$grob_type> can be one of following,
 
 =tmpl grob_types
 
-=over 4
-
-=item *
-
-circle
-
-=item *
-
-lines
-
-=item *
-
-points
-
-=item *
-
-polygon
-
-=item *
-
-polyline
-
-=item *
-
-rect
-
-=item *
-
-segments
-
-=item *
-
-text
-
-=item *
-
-null
-
-=item *
-
-zero
-
-=back
+=for :list
+* circle
+* lines
+* points
+* polygon
+* polyline
+* rect
+* segments
+* text
+* null
+* zero
 
 =tmpl
 
