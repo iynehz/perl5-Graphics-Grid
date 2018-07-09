@@ -6,7 +6,7 @@ use Graphics::Grid::Setup;
 
 # VERSION
 
-use Exporter 'import';
+use parent qw(Exporter::Tiny);
 
 our @EXPORT_OK = qw(
   dots_to_cm cm_to_dots

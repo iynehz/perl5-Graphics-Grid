@@ -17,7 +17,8 @@ use Graphics::Grid::Grill;
 
 my @grob_types = Graphics::Grid->_grob_types();
 
-use Exporter 'import';
+use parent qw(Exporter::Tiny);
+
 our @EXPORT_OK = (
     qw(
       unit gpar viewport
