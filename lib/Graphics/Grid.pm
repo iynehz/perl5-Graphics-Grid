@@ -482,8 +482,7 @@ name "grid".
 =back
 
 The target of this Perl Graphics::Grid library, as of today, is to have
-most of the R "grid"'s fundamental features mentioned above except for
-the grid-layout system. 
+most of the R "grid"'s fundamental features mentioned above.
 
 This Graphics::Grid module is the object interface of this libray. There is
 also a function interface L<Graphics::Grid::Functions>, which is more like

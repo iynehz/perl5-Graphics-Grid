@@ -6,7 +6,12 @@ use Graphics::Grid::Role;
 
 # VERSION
 
+use List::AllUtils qw(reduce);
+use namespace::autoclean;
+
 use Graphics::Grid::Types qw(:all);
+
+with qw(MooseX::Clone);
 
 =tmpl attr_elems
 

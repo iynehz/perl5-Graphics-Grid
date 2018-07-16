@@ -8,7 +8,7 @@ use Graphics::Grid::Class;
 
 use Scalar::Util qw(looks_like_number);
 use Type::Params ();
-use Types::Standard qw(Str ArrayRef Value Num);
+use Types::Standard qw(Str ArrayRef Value Num Maybe);
 use namespace::autoclean;
 
 use Graphics::Grid::Types qw(:all);
@@ -56,61 +56,31 @@ Array ref of units.
 
 Possible units are:
 
-=over 4
+=for :list
 
-=item *
-
-npc
-
+*npc
 Normalised Parent Coordinates (the default). The origin of the viewport is
 (0, 0) and the viewport has a width and height of 1 unit. For example,
 (0.5, 0.5) is the centre of the viewport.
-
-=item *
-
-cm
-
+* cm
 Centimeters.
-
-=item *
-
-inches
-
+* inches
 Inches. 1 in = 2.54 cm.
-
-=item *
-
-mm
-
+* mm
 Millimeters. 10 mm = 1 cm.
-
-=item *
-
-points
-
+* points
 Points. 72.27 pt = 1 in.
-
-=item *
-
-picas
-
+* picas
 Picas. 1 pc = 12 pt.
-
-=item *
-
-char
-
+* char
 Multiples of nominal font height of the viewport (as specified by the
 viewport's C<fontsize>).
-
-=item *
-
-native
-
+* native
 Locations and dimensions are relative to the viewport's C<xscale> and
 C<yscale>.
-
-=back
+* null
+Only meaningful for layouts. It indicates what relative fraction of the
+available width/height the column/row occupies.
 
 =cut
 
@@ -198,11 +168,13 @@ method _make_operation ( $op, $other, $swap = undef ) {
       ->_make_operation( $op, $other, $swap );
 }
 
-method plus ( UnitLike $other, $swap = undef ) {
+method plus ( Maybe[UnitLike] $other, $swap = undef ) {
+    return $self->clone unless defined $other;
     return $self->_make_operation( '+', $other, $swap );
 }
 
-method minus ( UnitLike $other, $swap = undef ) {
+method minus ( Maybe[UnitLike] $other, $swap = undef ) {
+    return $self->clone unless defined $other;
     return $self->_make_operation( '-', $other, $swap );
 }
 

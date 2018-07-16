@@ -1,4 +1,4 @@
-package Graphics::Grid::Justifiable;
+package Graphics::Grid::HasJust;
 
 # ABSTRACT: Role for supporting positional justifications in Graphics::Grid
 

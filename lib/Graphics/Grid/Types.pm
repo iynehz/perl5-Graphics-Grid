@@ -21,7 +21,6 @@ use Type::Library -base, -declare => qw(
 use Type::Utils -all;
 use Types::Standard -types;
 
-
 class_type Unit, { class => 'Graphics::Grid::Unit' };
 coerce Unit,
   from Value,    via { 'Graphics::Grid::Unit'->new($_) },
@@ -29,7 +28,7 @@ coerce Unit,
 
 class_type UnitArithmetic, { class => 'Graphics::Grid::UnitArithmetic' };
 
-declare UnitLike, as ConsumerOf["Graphics::Grid::UnitLike"];
+declare UnitLike, as ConsumerOf ["Graphics::Grid::UnitLike"];
 coerce UnitLike,
   from Value,    via { 'Graphics::Grid::Unit'->new($_) },
   from ArrayRef, via { 'Graphics::Grid::Unit'->new($_) };
@@ -73,7 +72,12 @@ coerce Justification, from Str, via {
 
 # For unit with multiple names, like "inches" and "in", we directly support
 #  only one of its names, and handle other names via coercion.
-declare UnitName, as Enum [qw(npc cm inches mm points picas char native)];
+declare UnitName, as Enum [
+    qw(
+      npc char native null
+      cm inches mm points picas
+      )
+];
 coerce UnitName, from Str, via {
     state $mapping;
     unless ($mapping) {
@@ -94,7 +98,7 @@ coerce UnitName, from Str, via {
     return ( $mapping->{$_} // $_ );
 };
 
-declare PlottingCharacter, as (Int | Str), where { length($_) > 0 };
+declare PlottingCharacter, as( Int | Str ), where { length($_) > 0 };
 
 declare LineType,
   as Enum [qw(blank solid dashed dotted dotdash longdash twodash)];
@@ -108,7 +112,8 @@ coerce FontFace, from Str, via {
 
 declare Clip, as Enum [qw(on off inherit)];
 
-declare_coercion "ArrayRefFromAny", to_type ArrayRef, from Any, via { is_plain_arrayref($_) ? $_ : [$_] };
+declare_coercion "ArrayRefFromAny", to_type ArrayRef, from Any,
+  via { is_plain_arrayref($_) ? $_ : [$_] };
 declare_coercion "ArrayRefFromValue", to_type ArrayRef, from Value,
   via { [$_] };
 

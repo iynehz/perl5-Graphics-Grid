@@ -8,11 +8,13 @@ use Graphics::Grid::Class;
 
 use Cairo;
 use Scalar::Util qw(looks_like_number);
-use List::AllUtils qw(min max pairwise);
+use List::AllUtils qw(min max pairwise reduce);
 use Math::Trig qw(:pi :radial deg2rad);
 use Path::Tiny;
 use Types::Standard qw(Enum Str InstanceOf Num);
+use namespace::autoclean;
 
+use Graphics::Grid::Unit;
 use Graphics::Grid::Util qw(dots_to_cm cm_to_dots points_to_cm cm_to_points);
 
 my $AntialiasMode = Enum [qw(default none gray subpixel)];
@@ -62,7 +64,7 @@ Allowed values are C<"png">, C<"svg">, C<"pdf">, C<"ps">. Default is C<"png">.
 
 =cut
 
-has format => ( is => 'ro', isa => $Format, default => 'png' );
+has format => ( is => 'ro', isa => $Format, default => 'png', coerce => 1 );
 
 =attr surface
 
@@ -125,7 +127,7 @@ has 'surface' => (
 
 with qw(Graphics::Grid::Driver);
 
-method _set_vptree( $vptree, $old_vptree = undef ) {
+method _set_vptree ( $vptree, $old_vptree = undef ) {
     my $ctx = $self->cairo;
 
     my $path = $self->current_vptree->path_from_root;
@@ -133,28 +135,81 @@ method _set_vptree( $vptree, $old_vptree = undef ) {
     # reset to basic setup
     $self->_reset_transform();
 
-    # bypass root vp
-    shift @$path;
-
+    # initial vp width and height
     my $vp_width  = dots_to_cm( $self->width,  $self->dpi );
     my $vp_height = dots_to_cm( $self->height, $self->dpi );
 
-    for my $vp (@$path) {
-        my $x =
-          $self->_transform_width_to_cm( $vp->x, 0, $vp->gp, $vp_width,
-            $vp_height );
-        my $y =
-          $self->_transform_height_to_cm( $vp->y, 0, $vp->gp, $vp_width,
-            $vp_height );
-        my $width =
-          $self->_transform_width_to_cm( $vp->width, 0, $vp->gp, $vp_width,
-            $vp_height );
-        my $height =
-          $self->_transform_height_to_cm( $vp->height, 0, $vp->gp, $vp_width,
-            $vp_height );
+    my $unit1 = Graphics::Grid::Unit->new( 1, 'npc' );
+
+    # start from 1 to skip root vp
+    for my $i ( 1 .. $#$path ) {
+        my $vp = $path->[$i];
+
+        my ( $x, $y, $width, $height );
+
+        if ( $vp->layout_pos_col or $vp->layout_pos_row ) {
+            my $parent_vp = $path->[ $i - 1 ];
+            my $layout    = $parent_vp->layout;
+            die unless $layout;
+
+            my $layout_width  = $layout->width;
+            my $layout_height = $layout->height;
+
+            $width =
+              $self->_transform_width_to_cm(
+                $layout->cell_width( $vp->layout_pos_col ),
+                0, $vp->gp, $vp_width, $vp_height );
+            $height =
+              $self->_transform_height_to_cm(
+                $layout->cell_height( $vp->layout_pos_row ),
+                0, $vp->gp, $vp_width, $vp_height );
+
+            my $x_base = ( $unit1 - $layout->width ) * $layout->hjust;
+            my $y_base =
+              ( $unit1 - $layout->height ) * $layout->vjust + $layout->height;
+
+            $x = $self->_transform_width_to_cm(
+                (
+                    reduce { $a + $b } $x_base,
+                    map { $layout->widths->at($_) }
+                      ( 0 .. min( @{ $vp->layout_pos_col } ) - 1 )
+                ),
+                0,
+                $vp->gp,
+                $vp_width,
+                $vp_height
+              ) +
+              $width * 0.5;
+            $y = $self->_transform_height_to_cm(
+                (
+                    $y_base - reduce { $a + $b } undef,
+                    map { $layout->heights->at($_) }
+                      ( 0 .. min( @{ $vp->layout_pos_row } ) - 1 )
+                ),
+                0,
+                $vp->gp,
+                $vp_width,
+                $vp_height
+              ) -
+              $height * 0.5;
+        }
+        else {
+            $x =
+              $self->_transform_width_to_cm( $vp->x, 0, $vp->gp, $vp_width,
+                $vp_height );
+            $y =
+              $self->_transform_height_to_cm( $vp->y, 0, $vp->gp, $vp_width,
+                $vp_height );
+            $width =
+              $self->_transform_width_to_cm( $vp->width, 0, $vp->gp, $vp_width,
+                $vp_height );
+            $height =
+              $self->_transform_height_to_cm( $vp->height, 0, $vp->gp,
+                $vp_width, $vp_height );
+
+        }
 
         $ctx->translate( $x, $y );
-
         if ( $vp->angle != 0 ) {
             $ctx->rotate( deg2rad( $vp->angle ) );
         }
@@ -169,7 +224,7 @@ method _set_vptree( $vptree, $old_vptree = undef ) {
     $self->_current_vp_height_cm($vp_height);
 }
 
-method _reset_transform() {
+method _reset_transform () {
     my $ctx = $self->cairo;
 
     # reset transfom
@@ -188,11 +243,12 @@ method _reset_transform() {
 
 }
 
-method _set_scale_cm() {
+method _set_scale_cm () {
     my $ctx = $self->cairo;
     $ctx->scale( $self->dpi / 2.54, -$self->dpi / 2.54 );
 }
-method _unset_scale_cm() {
+
+method _unset_scale_cm () {
     my $ctx = $self->cairo;
     $ctx->scale( 2.54 / $self->dpi, -2.54 / $self->dpi );
 }
@@ -203,7 +259,7 @@ Get the data in a scalar for this driver.
 
 =cut
 
-method data() {
+method data () {
     my $ctx = $self->cairo;
 
     if ( $self->format eq 'png' ) {
@@ -226,7 +282,7 @@ method data() {
     return $self->{DATA};
 }
 
-method draw_circle($circle_grob) {
+method draw_circle ($circle_grob) {
     my $ctx = $self->cairo;
 
     my $vp_width  = $self->_current_vp_width_cm;
@@ -256,7 +312,7 @@ method draw_circle($circle_grob) {
     }
 }
 
-method draw_rect($rect_grob) {
+method draw_rect ($rect_grob) {
     my $ctx = $self->cairo;
 
     my $vp_width  = $self->_current_vp_width_cm;
@@ -302,7 +358,7 @@ my $path_func_lines = fun( $c, $points ) {
     }
 };
 
-method draw_segments($segments_grob) {
+method draw_segments ($segments_grob) {
     my $ctx = $self->cairo;
 
     my $gp = $self->current_gp;
@@ -330,11 +386,11 @@ method draw_segments($segments_grob) {
     }
 }
 
-method draw_polyline($polyline_grob) {
+method draw_polyline ($polyline_grob) {
     $self->_draw_polyline( $polyline_grob, $path_func_lines, false );
 }
 
-method draw_polygon($polygon_grob) {
+method draw_polygon ($polygon_grob) {
     $self->_draw_polyline(
         $polygon_grob,
         fun( $c, $points )
@@ -351,7 +407,7 @@ method draw_polygon($polygon_grob) {
     );
 }
 
-method _draw_polyline( $polyline_grob, $path_func, $is_fill = false ) {
+method _draw_polyline ( $polyline_grob, $path_func, $is_fill = false ) {
     my $ctx = $self->cairo;
 
     my $gp = $self->current_gp;
@@ -379,7 +435,7 @@ method _draw_polyline( $polyline_grob, $path_func, $is_fill = false ) {
     }
 }
 
-method _draw_shape( $gp, $path_func, $is_fill = false ) {
+method _draw_shape ( $gp, $path_func, $is_fill = false ) {
     my $ctx = $self->cairo;
 
     # draw path
@@ -452,21 +508,21 @@ method _draw_shape( $gp, $path_func, $is_fill = false ) {
     return 0;
 }
 
-method _set_color($gp) {
+method _set_color ($gp) {
     my $ctx   = $self->cairo;
     my $color = $gp->col->[0];
     $color->alpha( $gp->alpha->[0] ) if $gp->has_alpha;
     $ctx->set_source_rgba( $color->as_array_with_alpha );
 }
 
-method _set_fill($gp) {
+method _set_fill ($gp) {
     my $ctx   = $self->cairo;
     my $color = $gp->fill->[0];
     $color->alpha( $gp->alpha->[0] ) if defined $gp->has_alpha;
     $ctx->set_source_rgba( $color->as_array_with_alpha );
 }
 
-method _select_font_face($gp) {
+method _select_font_face ($gp) {
     my $ctx        = $self->cairo;
     my $fontfamily = $gp->fontfamily->[0];
     my $fontface   = $gp->fontface->[0];
@@ -483,7 +539,7 @@ method _select_font_face($gp) {
         @{ $fontface_to_params->{$fontface} } );
 }
 
-method draw_text($text_grob) {
+method draw_text ($text_grob) {
     my $ctx = $self->cairo;
 
     my $vp_width  = $self->_current_vp_width_cm;
@@ -543,7 +599,7 @@ method draw_text($text_grob) {
 use Graphics::Grid::Grob::Text;
 
 # TODO: this is now just a poor man's implementation...
-method draw_points($points_grob) {
+method draw_points ($points_grob) {
     my $elems = $points_grob->elems;
     my $gp    = $self->current_gp;
 
@@ -587,7 +643,7 @@ Write this driver's data to the specified file.
 
 =cut
 
-method write($file) {
+method write ($file) {
     path($file)->spew_raw( $self->data );
 }
 

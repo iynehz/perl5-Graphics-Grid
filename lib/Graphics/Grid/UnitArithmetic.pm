@@ -8,7 +8,7 @@ use Graphics::Grid::Class;
 
 use Scalar::Util qw(looks_like_number);
 use Type::Params ();
-use Types::Standard qw(Str ArrayRef Any Num);
+use Types::Standard qw(Str ArrayRef Any Num Maybe);
 use namespace::autoclean;
 
 use Graphics::Grid::Util qw(points_to_cm);
@@ -217,11 +217,13 @@ method _make_operation( $op, $other, $swap = undef ) {
     );
 }
 
-method plus( UnitLike $other, $swap = undef ) {
+method plus( Maybe[UnitLike] $other, $swap = undef ) {
+    return $self->clone unless (defined $other);
     return $self->_make_operation( '+', $other, $swap );
 }
 
-method minus( UnitLike $other, $swap = undef ) {
+method minus( Maybe[UnitLike] $other, $swap = undef ) {
+    return $self->clone unless (defined $other);
     return $self->_make_operation( '-', $other, $swap );
 }
 
@@ -257,7 +259,7 @@ __END__
 
     # or use the function interface
     use Graphics::Grid::Functions qw(:all);
-    my $ua = unit(@params) * 2;
+    my $ua = unit(2, 'inches') * 2;
     
 =head1 DESCRIPTION
 
@@ -271,7 +273,7 @@ value that combines both relative and absolute values.
 Supported operators are C<+>, C<->, and C<*>. A plus or minus
 operation requires both its binary operands are consumers of 
 Graphics::Grid::UnitLike. The multiply operation requires one of
-its operands is consumer of Graphics::Grid::UnitLike, the other
+its operands is consumer of L<Graphics::Grid::UnitLike>, the other
 a number or array ref of numbers.
 
 =head1 SEE ALSO

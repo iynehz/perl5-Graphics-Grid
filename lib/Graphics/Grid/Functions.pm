@@ -11,6 +11,7 @@ use Module::Load;
 use Graphics::Grid;
 use Graphics::Grid::GPar;
 use Graphics::Grid::Unit;
+use Graphics::Grid::Layout;
 use Graphics::Grid::Viewport;
 use Graphics::Grid::GTree;
 use Graphics::Grid::Grill;
@@ -21,7 +22,7 @@ use parent qw(Exporter::Tiny);
 
 our @EXPORT_OK = (
     qw(
-      unit gpar viewport
+      unit gpar viewport grid_layout
       grid_write grid_draw grid_driver
       push_viewport pop_viewport up_viewport down_viewport seek_viewport
       gtree grill grid_grill
@@ -44,12 +45,16 @@ sub viewport {
     return Graphics::Grid::Viewport->new(@_);
 }
 
+sub grid_layout {
+    return Graphics::Grid::Layout->new(@_);
+}
+
 sub grid_draw {
-    $grid->draw(@_);
+    return $grid->draw(@_);
 }
 
 sub grid_write {
-    $grid->write(@_);
+    return $grid->write(@_);
 }
 
 fun grid_driver ( :$driver = 'Cairo', %rest ) {
@@ -139,35 +144,39 @@ operated.
 
 =head2 unit(%params)
 
-It's equivalent to C<Graphics::Grid::Unit-E<gt>new>.
+It's same as C<Graphics::Grid::Unit-E<gt>new>.
 
 =head2 viewport(%params)
 
-It's equivalent to C<Graphics::Grid::Viewport-E<gt>new>.
+It's same as C<Graphics::Grid::Viewport-E<gt>new>.
+
+=head2 layout(%prams)
+
+It's same as C<Graphics::Grid::Layout-E<gt>new>.
 
 =head2 gpar(%params)
 
-It's equivalent to C<Graphics::Grid::GPar-E<gt>new>.
+It's same as C<Graphics::Grid::GPar-E<gt>new>.
 
 =head2 push_viewport($viewport)
 
-It's equivalent to Graphics::Grid's C<push_viewport> method.
+It's same as Graphics::Grid's C<push_viewport> method.
 
 =head2 pop_viewport($n=1)
 
-It's equivalent to Graphics::Grid's C<pop_viewport> method.
+It's same as Graphics::Grid's C<pop_viewport> method.
 
 =head2 up_viewport($n=1)
 
-It's equivalent to Graphics::Grid's C<up_viewport> method.
+It's same as Graphics::Grid's C<up_viewport> method.
 
 =head2 down_viewport($from_tree_node, $name)
 
-It's equivalent to Graphics::Grid's C<down_viewport> method.
+It's same as Graphics::Grid's C<down_viewport> method.
 
 =head2 seek_viewport($name)
 
-It's equivalent to Graphics::Grid's C<seek_viewport> method.
+It's same as Graphics::Grid's C<seek_viewport> method.
 
 =head2 ${grob_type}_grob(%params)
 
@@ -179,7 +188,7 @@ C<$grob_type> can be one of following,
 
 =head2 grid_${grob_type}(%params)
 
-This creates a grob, and draws it. This is equivalent to Graphics::Grid's
+This creates a grob, and draws it. This is same as Graphics::Grid's
 ${grob_type}(...) method.
 
 See above for possible C<$grob_type>.
@@ -194,11 +203,11 @@ This creates a grill object and draws it.
 
 =head2 gtree(%params)
 
-It's equivalent to C<Graphics::Grid::GTree-E<gt>new>.
+It's same as C<Graphics::Grid::GTree-E<gt>new>.
 
 =head2 grid_draw($grob)
 
-It's equivalent to Graphics::Grid's C<draw> method.
+It's same as Graphics::Grid's C<draw> method.
 
 =head2 grid_driver(:$driver='Cairo', %rest)
 
@@ -225,7 +234,7 @@ This function returns current width and height.
 
 =head2 grid_write($filename)
 
-It's equivalent to Graphics::Grid's C<write> method.
+It's same as Graphics::Grid's C<write> method.
 
 =head1 SEE ALSO
 

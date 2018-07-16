@@ -109,6 +109,9 @@ for my $case (@cases_constructor) {
         '(1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2',
         'overload +/-/*'
     );
+
+    is(($ua2 + undef)->stringify, $ua2->stringify, '+undef');
+    is(($ua2 - undef)->stringify, $ua2->stringify, '-undef');
 }
 
 done_testing;

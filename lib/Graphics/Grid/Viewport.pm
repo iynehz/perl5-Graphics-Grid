@@ -6,7 +6,7 @@ use Graphics::Grid::Class;
 
 # VERSION
 
-use Types::Standard qw(Num Str ArrayRef HashRef);
+use Types::Standard qw(Int InstanceOf Num Str ArrayRef HashRef);
 use namespace::autoclean;
 
 use Graphics::Grid::Types qw(:all);
@@ -16,7 +16,7 @@ use Graphics::Grid::Unit;
 
 =include attr_width_height@Graphics::Grid::Dimensional
 
-=include attr_just@Graphics::Grid::Justifiable
+=include attr_just@Graphics::Grid::HasJust
 
 =include attr_gp@Graphics::Grid::HasGPar
 
@@ -67,9 +67,29 @@ has angle => (
     default => 0
 );
 
-#has layout         => ();
-#has layout_pos_row => ();
-#has layout_pos_col => ();
+=attr layout
+
+A L<Graphics::Grid::Layout> object which splits the viewport into subregions.
+
+=attr layout_pos_row
+
+Indices of rows occupied by this viewport in its parent's layout.
+
+=attr layout_pos_col
+
+Indices of columns occupied by this viewport in its parent's layout.
+
+=cut
+
+has layout => (
+    is  => 'ro',
+    isa => InstanceOf ["Graphics::Grid::Layout"],
+);
+has [qw(layout_pos_row layout_pos_col)] => (
+    is  => 'ro',
+    isa => ( ArrayRef [Int] )->plus_coercions(ArrayRefFromAny),
+    coerce => 1,
+);
 
 =attr name
 
@@ -99,7 +119,7 @@ has _uid => (
 with qw(
   Graphics::Grid::Positional
   Graphics::Grid::Dimensional
-  Graphics::Grid::Justifiable
+  Graphics::Grid::HasJust
   Graphics::Grid::HasGPar
 );
 

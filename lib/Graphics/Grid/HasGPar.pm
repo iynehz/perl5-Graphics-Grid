@@ -13,7 +13,7 @@ use Graphics::Grid::Types qw(:all);
 
 =attr gp
 
-An object of Graphics::Grid::GPar. Default is an empty gpar object.
+An object of L<Graphics::Grid::GPar>. Default is an empty gpar object.
 
 =tmpl
 

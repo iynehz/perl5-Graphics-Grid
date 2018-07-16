@@ -13,7 +13,7 @@ use namespace::autoclean;
 
 =include attr_width_height@Graphics::Grid::Dimensional
 
-=include attr_just@Graphics::Grid::Justifiable
+=include attr_just@Graphics::Grid::HasJust
 
 =include attr_gp@Graphics::Grid::HasGPar
 
@@ -29,7 +29,7 @@ with qw(
   Graphics::Grid::Grob
   Graphics::Grid::Positional
   Graphics::Grid::Dimensional
-  Graphics::Grid::Justifiable
+  Graphics::Grid::HasJust
 );
 
 method _build_elems() {
