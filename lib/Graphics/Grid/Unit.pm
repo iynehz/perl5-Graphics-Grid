@@ -146,13 +146,11 @@ classmethod is_absolute_unit ($unit_name) {
     return exists( $absolute_units->{$unit_name_coerced} );
 }
 
-=method stringify
-
-Stringify the object.
+=include method_string@Graphics::Grid::UnitLike
 
 =cut
 
-method stringify () {
+method string () {
     return join(
         ', ',
         map {

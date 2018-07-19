@@ -57,15 +57,15 @@ method path_from_root() {
     return \@path;
 }
 
-=method stringify()
+=method string()
 
-    my $tree_as_a_string = $tree->stringify();
+    my $tree_as_a_string = $tree->string();
 
-Return the tree structure as a string.
+Returns a string to represent the object.
 
 =cut
 
-method stringify () {
+method string () {
     if ( $self->is_leaf ) {
         return sprintf( "Viewport[%s]", $self->node->name );
     }
@@ -74,7 +74,7 @@ method stringify () {
             "Viewport[%s]->(%s)",
             $self->node->name,
             join( ',',
-                map { $_->stringify() } @{ $self->children } )
+                map { $_->string() } @{ $self->children } )
         );
     }
 }

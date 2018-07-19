@@ -54,8 +54,8 @@ use Graphics::Grid::ViewportTree;
             ),
         ]
     );
-    is( $tree->stringify,
-        'Viewport[A]->(Viewport[B],Viewport[C]->(Viewport[D]))', 'stringify' );
+    is( $tree->string,
+        'Viewport[A]->(Viewport[B],Viewport[C]->(Viewport[D]))', 'string' );
 }
 
 done_testing;

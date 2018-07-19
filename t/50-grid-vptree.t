@@ -14,14 +14,14 @@ my $grid = Graphics::Grid->new;
 my ( $a, $b, $c, $d, $e, $f, $g ) =
   map { Graphics::Grid::Viewport->new( name => $_ ) } ( 'A' .. 'G' );
 
-is( $grid->current_vptree->stringify,
+is( $grid->current_vptree->string,
     'Viewport[ROOT]', 'vptree has a ROOT node' );
 
 $grid->push_viewport($a);
 $grid->push_viewport([$b, $c]);
 $grid->push_viewport($d, $e);
 is(
-    $grid->current_vptree->stringify,
+    $grid->current_vptree->string,
 'Viewport[ROOT]->(Viewport[A]->(Viewport[B],Viewport[C]->(Viewport[D]->(Viewport[E]))))',
     'push_viewport'
 );
@@ -31,7 +31,7 @@ is( $grid->current_viewport->name, 'E',
 $grid->up_viewport(2);
 is( $grid->current_viewport->name, 'C', 'up_viewport' );
 is(
-    $grid->current_vptree(false)->stringify,
+    $grid->current_vptree(false)->string,
     'Viewport[C]->(Viewport[D]->(Viewport[E]))',
     'up_viewport does not remove viewports'
 );
@@ -43,23 +43,23 @@ is( $grid->current_viewport->name, 'E', 'down_viewport' );
 
 $grid->pop_viewport(2);
 is( $grid->current_viewport->name, 'C', 'pop_viewport' );
-is( $grid->current_vptree(false)->stringify,
+is( $grid->current_vptree(false)->string,
     'Viewport[C]', 'pop_viewport removes viewports' );
 
 $grid->pop_viewport(0);
-is( $grid->current_vptree->stringify, 'Viewport[ROOT]', 'pop_viewport(0)' );
+is( $grid->current_vptree->string, 'Viewport[ROOT]', 'pop_viewport(0)' );
 
 $grid->push_viewport( $a, $b, $a );
 $grid->seek_viewport('A');
 
 is(
-    $grid->current_vptree(false)->stringify,
+    $grid->current_vptree(false)->string,
     'Viewport[A]->(Viewport[B]->(Viewport[A]))',
     'seek_viewport(name)'
 );
 
 $grid->seek_viewport( [qw(B A)] );
-is( $grid->current_vptree(false)->stringify,
+is( $grid->current_vptree(false)->string,
     'Viewport[A]', 'seek_viewport(path)' );
 
 done_testing;

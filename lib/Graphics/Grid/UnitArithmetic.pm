@@ -174,15 +174,13 @@ method is_arithmetic() {
     return !( $self->is_unit() or $self->is_number() );
 }
 
-=method stringify
-
-Stringify the object.
+=include method_string@Graphics::Grid::UnitLike
 
 =cut
 
-method stringify() {
+method string() {
     if ( $self->is_unit ) {
-        return $self->node->stringify;
+        return $self->node->string;
     }
     elsif ( $self->is_number ) {
         return join( ', ', @{ $self->node } );
@@ -204,7 +202,7 @@ method stringify() {
                 }
                 $format //= "%s%s%s";
                 sprintf( $format,
-                    $arg0->stringify, $self->node, $arg1->stringify );
+                    $arg0->string, $self->node, $arg1->string );
             } ( 0 .. $self->elems - 1 )
         );
     }

@@ -37,11 +37,17 @@ method length() { $self->elems; }
 
 requires 'at';
 
-=method stringify
+=tmpl method_string
+
+=method string
+
+Returns a string representing the object.
+
+=tmpl
 
 =cut
 
-requires 'stringify';
+requires 'string';
 
 1;
 

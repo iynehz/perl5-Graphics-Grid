@@ -20,14 +20,14 @@ my @cases_constructor = (
             node => 42,
         ],
         elems     => 1,
-        stringify => '42',
+        string => '42',
     },
     {
         params => [
             node => [42],
         ],
         elems     => 1,
-        stringify => '42',
+        string => '42',
     },
 
     {
@@ -39,7 +39,7 @@ my @cases_constructor = (
             ],
         ],
         elems     => 3,
-        stringify => '1cm-0.5npc, 2cm-0.5npc, 3cm-0.5npc',
+        string => '1cm-0.5npc, 2cm-0.5npc, 3cm-0.5npc',
     },
     {
         params => [
@@ -56,7 +56,7 @@ my @cases_constructor = (
             ],
         ],
         elems     => 3,
-        stringify => '2*(1cm+0.5npc), 2*(2cm+0.5npc), 2*(3cm+0.5npc)',
+        string => '2*(1cm+0.5npc), 2*(2cm+0.5npc), 2*(3cm+0.5npc)',
     },
     {
         params => [
@@ -73,7 +73,7 @@ my @cases_constructor = (
             ],
         ],
         elems     => 3,
-        stringify => '(1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2',
+        string => '(1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2',
     },
 );
 
@@ -85,11 +85,11 @@ for my $case (@cases_constructor) {
         is( $ua->elems, $case->{elems}, 'elems()' );
     }
 
-    if ( exists $case->{stringify} ) {
-        is( $ua->stringify, $case->{stringify}, 'stringify()' );
+    if ( exists $case->{string} ) {
+        is( $ua->string, $case->{string}, 'string()' );
     }
     else {
-        diag( $ua->stringify );
+        diag( $ua->string );
     }
 
 }
@@ -98,20 +98,20 @@ for my $case (@cases_constructor) {
     my $ua1 =
       Graphics::Grid::UnitArithmetic->new(
         node => Graphics::Grid::Unit->new( [ 1, 2, 3 ], "cm" ) );
-    is( ( $ua1 * 2 )->stringify, '1cm*2, 2cm*2, 3cm*2', 'overload +/-/*' );
+    is( ( $ua1 * 2 )->string, '1cm*2, 2cm*2, 3cm*2', 'overload +/-/*' );
 
     my $ua2 =
       ( Graphics::Grid::Unit->new( [ 1, 2, 3 ], "cm" ) +
           Graphics::Grid::Unit->new(0.5) ) * 2;
 
     is(
-        $ua2->stringify,
+        $ua2->string,
         '(1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2',
         'overload +/-/*'
     );
 
-    is(($ua2 + undef)->stringify, $ua2->stringify, '+undef');
-    is(($ua2 - undef)->stringify, $ua2->stringify, '-undef');
+    is(($ua2 + undef)->string, $ua2->string, '+undef');
+    is(($ua2 - undef)->string, $ua2->string, '-undef');
 }
 
 done_testing;
