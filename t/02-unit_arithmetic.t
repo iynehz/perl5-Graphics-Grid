@@ -104,6 +104,8 @@ for my $case (@cases_constructor) {
       ( Graphics::Grid::Unit->new( [ 1, 2, 3 ], "cm" ) +
           Graphics::Grid::Unit->new(0.5) ) * 2;
 
+    is($ua2->sum->string, '(1cm+0.5npc)*2+(2cm+0.5npc)*2+(3cm+0.5npc)*2', 'sum');
+
     is(
         $ua2->string,
         '(1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2',

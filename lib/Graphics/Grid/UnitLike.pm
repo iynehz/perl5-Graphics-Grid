@@ -49,6 +49,20 @@ Returns a string representing the object.
 
 requires 'string';
 
+=tmpl method_sum
+
+=method sum
+
+Sum the effective unit vector in a unit object.
+
+=tmpl
+
+=cut
+
+method sum() {
+    return reduce { $a + $b } map { $self->at($_) } (0 .. $self->elems - 1);
+}
+
 1;
 
 __END__

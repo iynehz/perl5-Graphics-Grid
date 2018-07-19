@@ -160,6 +160,10 @@ method string () {
     );
 }
 
+=include method_sum@Graphics::Grid::UnitLike
+
+=cut
+
 method _make_operation ( $op, $other, $swap = undef ) {
     require Graphics::Grid::UnitArithmetic;
     return Graphics::Grid::UnitArithmetic->new( node => $self )

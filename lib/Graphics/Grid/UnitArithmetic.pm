@@ -208,6 +208,10 @@ method string() {
     }
 }
 
+=include method_sum@Graphics::Grid::UnitLike
+
+=cut
+
 method _make_operation( $op, $other, $swap = undef ) {
     return __PACKAGE__->new(
         node     => $op,
