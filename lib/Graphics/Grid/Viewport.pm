@@ -46,13 +46,6 @@ has [ "xscale", "yscale" ] => (
     default => sub { [ 0, 1 ] },
 );
 
-# TODO
-
-#has clip => (
-#    isa     => Clip,
-#    default => 'inherit',
-#);
-
 =attr angle
 
 A numeric value indicating the angle of rotation of the viewport. Positive
@@ -91,36 +84,15 @@ has [qw(layout_pos_row layout_pos_col)] => (
     coerce => 1,
 );
 
-=attr name
-
-A string to uniquely identify the viewport once it has been pushed onto the
-viewport tree. If not specified, it would be assigned automatically.
+=include attr_name@Graphics::Grid::ViewportLike
 
 =cut
 
-has name => (
-    is      => 'ro',
-    isa     => Str,
-    lazy    => 1,
-    builder => '_build_name',
-);
-
-has _uid => (
-    is      => 'ro',
-    default => sub {
-        state $idx = 0;
-        my $name = "GRID.VP.$idx";
-        $idx++;
-        return $name;
-    },
-    init_arg => undef
-);
-
 with qw(
+  Graphics::Grid::ViewportLike
   Graphics::Grid::Positional
   Graphics::Grid::Dimensional
   Graphics::Grid::HasJust
-  Graphics::Grid::HasGPar
 );
 
 sub _build_name { $_[0]->_uid; }
@@ -152,4 +124,6 @@ number of coordinate systems within those regions.
 =head1 SEE ALSO
 
 L<Graphics::Grid>
+
+L<Graphics::Grid::ViewportLike>
 

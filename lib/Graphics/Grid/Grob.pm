@@ -6,7 +6,7 @@ use Graphics::Grid::Role;
 
 # VERSION
 
-use Types::Standard qw(InstanceOf Str);
+use Types::Standard qw(InstanceOf Maybe Str);
 use namespace::autoclean;
 
 use Graphics::Grid::GPar;
@@ -26,7 +26,7 @@ stack.
 
 =cut
 
-has vp => ( is => 'ro', isa => InstanceOf ["Graphics::Grid::Viewport"] );
+has vp => ( is => 'rw', isa => Maybe[ViewportLike] );
 
 =tmpl attr_elems
 
@@ -52,7 +52,7 @@ has elems => (
     init_arg => undef
 );
 
-has name => ( is => 'ro', isa => Str, default => '' );
+has name => ( is => 'rw', isa => Str, default => '' );
 
 with qw(
   Graphics::Grid::HasGPar

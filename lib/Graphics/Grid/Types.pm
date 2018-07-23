@@ -10,6 +10,7 @@ use warnings;
 use Ref::Util qw(is_plain_arrayref);
 use Type::Library -base, -declare => qw(
   UnitName Unit UnitArithmetic UnitLike
+  ViewportLike
   GPar
   PlottingCharacter
   LineType LineEnd LineJoin
@@ -32,6 +33,8 @@ declare UnitLike, as ConsumerOf ["Graphics::Grid::UnitLike"];
 coerce UnitLike,
   from Value,    via { 'Graphics::Grid::Unit'->new($_) },
   from ArrayRef, via { 'Graphics::Grid::Unit'->new($_) };
+
+declare ViewportLike, as ConsumerOf ["Graphics::Grid::ViewportLike"];
 
 class_type GPar, { class => 'Graphics::Grid::GPar' };
 coerce GPar, from HashRef, via { 'Graphics::Grid::GPar'->new($_) };

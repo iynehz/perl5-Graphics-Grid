@@ -251,8 +251,8 @@ method _seek_viewport( $from_tree, $name_or_path ) {
             $self->_current_vptree($tree);
 
             my $depth         = 0;
-            my $from_tree_uid = $from_tree->node->_uid;
-            while ( $tree->node->_uid ne $from_tree_uid ) {
+            my $from_tree_name = $from_tree->node->name;
+            while ( $tree->node->name ne $from_tree_name ) {
                 $depth++;
                 last unless ( $tree->has_parent );
                 $tree = $tree->parent;

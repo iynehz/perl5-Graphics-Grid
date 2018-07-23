@@ -14,7 +14,13 @@ use Types::Standard qw(ArrayRef InstanceOf);
 
 use Graphics::Grid::Viewport;
 
+with qw(Graphics::Grid::ViewportLike);
+
 has '+children' => ( isa => ArrayRef [ InstanceOf ['Graphics::Grid::ViewportTree'] ] );
+
+method _build_name() {
+    return $self->_uid('GRID.gTree');
+}
 
 around BUILDARGS => sub {
     my $orig  = shift;
@@ -93,8 +99,9 @@ This is a subclass of L<Forest::Tree>, storing viewports at tree nodes.
 
 =head1 SEE ALSO
 
-L<Graphics::Grid::Viewport>
-
 L<Forest::Tree>
 
+L<Graphics::Grid::ViewportLike>
+
+L<Graphics::Grid::Viewport>
 
