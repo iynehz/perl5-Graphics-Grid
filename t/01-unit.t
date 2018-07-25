@@ -93,6 +93,17 @@ for my $case (@cases_constructor) {
     is( $unit->unit,  $case->{unit},  "unit" );
 }
 
+{
+    my $u1 = Graphics::Grid::Unit->new( [1..3], 'npc' );
+    my $u2 = Graphics::Grid::Unit->new( [1..3], [('npc') x 3] );
+    my $u3 = Graphics::Grid::Unit->new( [1..2], [('npc') x 3] );
+
+    ok($u1 == $u2, '==');
+    ok($u1 != $u3, '!=');
+    ok($u1 eq $u2, 'eq');
+    ok($u1 ne $u3, 'ne');
+}
+
 ok( Graphics::Grid::Unit->is_absolute_unit('cm'),   'is_absolute_unit' );
 ok( !Graphics::Grid::Unit->is_absolute_unit('npc'), 'is_absolute_unit' );
 

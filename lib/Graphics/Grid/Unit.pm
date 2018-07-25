@@ -17,6 +17,8 @@ use overload
   '+'      => 'plus',
   '-'      => 'minus',
   '*'      => 'multiply',
+  '=='     => 'equal',
+  'eq'     => 'equal',
   fallback => 1;
 
 around BUILDARGS => sub {
@@ -182,6 +184,20 @@ method minus ( Maybe[UnitLike] $other, $swap = undef ) {
 
 method multiply ( ( ArrayRef [Num] | Num ) $other, $swap = undef ) {
     return $self->_make_operation( '*', $other, $swap );
+}
+
+method equal ($other, $swap=undef) {
+    return false if ( $self->elems != $other->elems ); 
+
+    my $at = fun( $l, $i ) { $l->[ $i % scalar(@{ $_[0] }) ]; };
+    for my $i ( 0 .. $self->elems - 1 ) {
+        unless ($at->( $self->value, $i ) == $at->( $other->value, $i )
+            and $at->( $self->unit, $i ) eq $at->( $other->unit, $i ) )
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 __PACKAGE__->meta->make_immutable;
