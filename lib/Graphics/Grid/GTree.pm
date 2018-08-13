@@ -13,7 +13,10 @@ use namespace::autoclean;
 
 has '+children' => ( isa => ArrayRef [ InstanceOf ['Graphics::Grid::GTree'] ] );
 
-with qw(Graphics::Grid::Grob);
+with qw(
+  MooseX::Clone
+  Graphics::Grid::Grob
+);
 
 around BUILDARGS => sub {
     my $orig  = shift;
@@ -41,6 +44,16 @@ method draw($driver) {
             $child->draw($driver);
         }
     }
+}
+
+=method make_content()
+
+A hook to allow a derived class to modify its children before being drawn.
+
+=cut
+
+method make_content() {
+    return $self->clone;
 }
 
 __PACKAGE__->meta->make_immutable;

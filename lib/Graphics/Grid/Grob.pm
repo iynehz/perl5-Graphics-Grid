@@ -55,6 +55,7 @@ has elems => (
 has name => ( is => 'rw', isa => Str, default => '' );
 
 with qw(
+  MooseX::Clone
   Graphics::Grid::HasGPar
 );
 
@@ -65,6 +66,16 @@ sub validate { }
 requires '_build_elems';    # for attr "elems"
 
 requires 'draw';
+
+=method make_context()
+
+A hook to allow a grob class to modify its vp before being drawn.
+
+=cut
+
+method make_context() {
+    return $self->clone;
+}
 
 1;
 

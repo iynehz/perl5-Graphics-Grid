@@ -311,6 +311,12 @@ method draw($grob) {
         $self->_set_vptree( $self->_vptree );
     }
 
+    # update grob/gtree pre-draw
+    $grob = $grob->make_context;
+    if ($grob->can('make_content')) {
+        $grob = $grob->make_content;
+    }
+
     if ( $grob->vp ) {
         $self->push_viewport( $grob->vp );
     }
