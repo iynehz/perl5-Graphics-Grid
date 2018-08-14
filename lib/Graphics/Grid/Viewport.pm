@@ -22,6 +22,12 @@ use Graphics::Grid::Unit;
 
 =cut
 
+=attr clip
+
+=cut
+
+has clip => (is => 'ro', isa => Clip, default => 'inherit' );
+
 =attr xscale
 
 A numeric array ref of length two indicating the minimum and maximum on
@@ -83,6 +89,8 @@ has [qw(layout_pos_row layout_pos_col)] => (
     isa => ( ArrayRef [Int] )->plus_coercions(ArrayRefFromAny),
     coerce => 1,
 );
+
+
 
 =include attr_name@Graphics::Grid::ViewportLike
 
