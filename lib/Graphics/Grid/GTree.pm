@@ -35,13 +35,13 @@ method _build_elems() {
     return $self->child_count;
 }
 
-method draw($driver) {
+method _draw($grid) {
     for my $child ( @{ $self->children } ) {
         if ( $child->node->$_can('draw') ) {
-            $child->node->draw($driver);
+            $child->node->draw($grid);
         }
         else {
-            $child->draw($driver);
+            $child->draw($grid);
         }
     }
 }

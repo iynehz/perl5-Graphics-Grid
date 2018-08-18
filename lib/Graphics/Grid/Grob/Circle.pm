@@ -42,8 +42,8 @@ method _build_elems() {
     return max( map { $self->$_->elems } qw(x y r) );
 }
 
-method draw($driver) {
-    $driver->draw_circle($self);
+method _draw($grid) {
+    $grid->driver->draw_circle($self);
 }
 
 __PACKAGE__->meta->make_immutable;

@@ -47,8 +47,8 @@ has '+x' =>
 has '+y' =>
   ( default => sub { Graphics::Grid::Unit->new( [ 0.5, 1, 0.5, 0 ] ) } );
 
-method draw($driver) {
-    $driver->draw_polygon($self);
+method _draw($grid) {
+    $grid->driver->draw_polygon($self);
 }
 
 __PACKAGE__->meta->make_immutable;

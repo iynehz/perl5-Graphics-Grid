@@ -65,8 +65,8 @@ method _build_elems() {
     return scalar( @{ $self->label } );
 }
 
-method draw($driver) {
-    $driver->draw_text($self);
+method _draw($grid) {
+    $grid->driver->draw_text($self);
 }
 
 __PACKAGE__->meta->make_immutable;

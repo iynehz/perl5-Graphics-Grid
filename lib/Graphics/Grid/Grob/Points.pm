@@ -99,8 +99,8 @@ method validate () {
     }
 }
 
-method draw ($driver) {
-    $driver->draw_points($self);
+method _draw ($grid) {
+    $grid->driver->draw_points($self);
 }
 
 __PACKAGE__->meta->make_immutable;

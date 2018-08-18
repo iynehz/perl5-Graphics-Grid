@@ -65,7 +65,20 @@ sub validate { }
 
 requires '_build_elems';    # for attr "elems"
 
-requires 'draw';
+=method draw($grid)
+
+This would call C<$grid-E<gt>draw($self)>, which would further call the
+grob's C<_draw> method.
+
+=method _draw($grid) 
+
+=cut
+
+method draw($grid) {
+    $grid->draw($self);
+}
+
+requires '_draw';
 
 =method make_context()
 

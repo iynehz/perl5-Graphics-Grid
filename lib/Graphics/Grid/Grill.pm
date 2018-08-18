@@ -47,7 +47,7 @@ has '+gp' => ( default => sub { Graphics::Grid::GPar->new( col => "grey" ) }, );
 
 method _build_elems () { 1; }
 
-method draw ($driver) {
+method _draw ($grid) {
     my $make_line_unit = fun($h_or_v, $idx) {
         my $u = $h_or_v->at($idx);
         return Graphics::Grid::Unit->new([($u->value->[0]) x 2], $u->unit->[0]);
@@ -75,7 +75,7 @@ method draw ($driver) {
     );
 
     for (@lines) {
-        $_->draw($driver);
+        $_->_draw($grid);
     }
 }
 

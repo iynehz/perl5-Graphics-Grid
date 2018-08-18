@@ -12,7 +12,7 @@ with qw(
 
 method _build_elems() { 0 }
 
-method draw($driver) { }
+method _draw($grid) { }
 
 1;
 

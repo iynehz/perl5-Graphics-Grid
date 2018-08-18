@@ -169,8 +169,8 @@ method validate () {
     }
 }
 
-method draw ($driver) {
-    $driver->draw_polyline($self);
+method _draw ($grid) {
+    $grid->driver->draw_polyline($self);
 }
 
 __PACKAGE__->meta->make_immutable;

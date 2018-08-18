@@ -328,7 +328,7 @@ method draw($grob) {
     my $merged_gp = reduce { $a->merge($b) } $gp[0], @gp[ 1 .. $#gp ];
     $self->driver->current_gp($merged_gp);
 
-    $grob->draw( $self->driver );
+    $grob->_draw( $self );
 
     if ( $grob->gp ) {
         $self->_pop_gp();

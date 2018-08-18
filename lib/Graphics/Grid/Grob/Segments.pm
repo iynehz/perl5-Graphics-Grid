@@ -63,8 +63,8 @@ method _build_elems() {
     return List::AllUtils::max( map { $self->$_->elems } qw(x0 y0 x1 y1) );
 }
 
-method draw($driver) {
-    $driver->draw_segments($self);
+method _draw($grid) {
+    $grid->driver->draw_segments($self);
 }
 
 __PACKAGE__->meta->make_immutable;
