@@ -335,7 +335,7 @@ method draw($grob) {
     }
 
     if ( $grob->vp ) {
-        $self->pop_viewport( $grob->vp );
+        $self->pop_viewport();
     }
 }
 
