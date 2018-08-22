@@ -146,6 +146,17 @@ and draw a rectangular grob.
 
 `$grob_type` can be one of following,
 
+- circle
+- lines
+- points
+- polygon
+- polyline
+- rect
+- segments
+- text
+- null
+- zero
+
 ## write($filename)
 
 Write to file.

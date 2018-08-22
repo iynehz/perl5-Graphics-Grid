@@ -97,6 +97,10 @@ has cex => (
     default => sub { [1] },
 );
 
+=classmethod names()
+
+=cut
+
 classmethod names () {
     my @names = qw(col fill alpha
       lty lwd lex lineend linejoin linemitre

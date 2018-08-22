@@ -59,7 +59,6 @@ Array ref of units.
 Possible units are:
 
 =for :list
-
 *npc
 Normalised Parent Coordinates (the default). The origin of the viewport is
 (0, 0) and the viewport has a width and height of 1 unit. For example,
@@ -132,7 +131,7 @@ method elems () {
 
 method length () { $self->elems; }
 
-=method is_absolute_unit($unit_name)
+=classmethod is_absolute_unit($unit_name)
 
 This is a class method. It tells if the given unit name is absolute or not.
 
