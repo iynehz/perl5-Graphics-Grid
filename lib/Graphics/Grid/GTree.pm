@@ -18,18 +18,15 @@ with qw(
   Graphics::Grid::Grob
 );
 
-around BUILDARGS => sub {
-    my $orig  = shift;
-    my $class = shift;
-
-    my %params = @_;
+around BUILDARGS($orig, $class : @rest) {
+    my %params = @rest;
     my $children = ( delete $params{children} ) // [];
     $children =
       [ map { $_->$_isa(__PACKAGE__) ? $_ : __PACKAGE__->new( node => $_ ); }
           @$children ];
 
     $class->$orig( %params, children => $children );
-};
+}
 
 method _build_elems() {
     return $self->child_count;

@@ -21,23 +21,20 @@ use overload
   'eq'     => 'equal',
   fallback => 1;
 
-around BUILDARGS => sub {
-    my $orig  = shift;
-    my $class = shift;
-
+around BUILDARGS($orig, $class : @rest) {
     my %params;
-    if ( @_ == 1 ) {
-        if ( ref( $_[0] ) ne 'HASH' ) {
-            return $class->$orig( value => $_[0] );
+    if ( @rest == 1 ) {
+        if ( ref( $rest[0] ) ne 'HASH' ) {
+            return $class->$orig( value => $rest[0] );
         }
     }
-    elsif ( @_ == 2
-        and ( ref( $_[0] ) eq 'ARRAY' or looks_like_number( $_[0] ) ) )
+    elsif ( @rest == 2
+        and ( ref( $rest[0] ) eq 'ARRAY' or looks_like_number( $rest[0] ) ) )
     {
-        return $class->$orig( value => $_[0], unit => $_[1] );
+        return $class->$orig( value => $rest[0], unit => $rest[1] );
     }
-    return $class->$orig(@_);
-};
+    return $class->$orig(@rest);
+}
 
 =attr value
 

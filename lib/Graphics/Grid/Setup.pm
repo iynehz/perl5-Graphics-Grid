@@ -58,7 +58,7 @@ sub _import_tag {
     elsif ( $tag eq ':class' ) {
         $class->_import_tag( $target, ':base' );
 
-        Function::Parameters->import::into( $target, qw(classmethod) );
+        Function::Parameters->import::into( $target, qw(classmethod :modifiers) );
 
         Moose->import::into($target);
         MooseX::StrictConstructor->import::into($target);
@@ -66,7 +66,7 @@ sub _import_tag {
     elsif ( $tag eq ':role' ) {
         $class->_import_tag( $target, ':base' );
 
-        Function::Parameters->import::into( $target, qw(classmethod) );
+        Function::Parameters->import::into( $target, qw(classmethod :modifiers) );
 
         Moose::Role->import::into($target);
     }

@@ -22,10 +22,7 @@ method _build_name() {
     return $self->_uid('GRID.gTree');
 }
 
-around BUILDARGS => sub {
-    my $orig  = shift;
-    my $class = shift;
-
+around BUILDARGS($orig, $class : @rest) {
     my %params = @_;
     my $children = ( delete $params{children} ) // [];
     $children =
@@ -33,7 +30,7 @@ around BUILDARGS => sub {
           @$children ];
 
     $class->$orig( %params, children => $children );
-};
+}
 
 =method node() 
 
