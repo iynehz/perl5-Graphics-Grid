@@ -7,10 +7,7 @@ use Test2::V0;
 
 use Graphics::Grid::Unit;
 
-ok(
-    Graphics::Grid::Unit->DOES('Graphics::Grid::UnitLike'),
-    'Graphics::Grid::Unit DOES Graphics::Grid::UnitLike'
-);
+DOES_ok( 'Graphics::Grid::Unit', [qw(Graphics::Grid::UnitLike)] );
 
 my @cases_constructor = (
     {
@@ -94,14 +91,36 @@ for my $case (@cases_constructor) {
 }
 
 {
-    my $u1 = Graphics::Grid::Unit->new( [1..3], 'npc' );
-    my $u2 = Graphics::Grid::Unit->new( [1..3], [('npc') x 3] );
-    my $u3 = Graphics::Grid::Unit->new( [1..2], [('npc') x 3] );
+    my $u1 = Graphics::Grid::Unit->new( [ 1 .. 3 ], 'npc' );
+    my $u2 = Graphics::Grid::Unit->new( [ 1 .. 3 ], [ ('npc') x 3 ] );
+    my $u3 = Graphics::Grid::Unit->new( [ 1 .. 2 ], [ ('npc') x 3 ] );
+    my $u4 = Graphics::Grid::Unit->new( [ 4 .. 6 ], 'cm' );
 
-    ok($u1 == $u2, '==');
-    ok($u1 != $u3, '!=');
-    ok($u1 eq $u2, 'eq');
-    ok($u1 ne $u3, 'ne');
+    ok( $u1 == $u2, '==' );
+    ok( $u1 != $u3, '!=' );
+    ok( $u1 eq $u2, 'eq' );
+    ok( $u1 ne $u3, 'ne' );
+
+    is( $u1->slice( [ 1, 2 ] )->string, '2npc, 3npc', 'slice()' );
+
+    my $appended = $u1->append($u4);
+    isa_ok( $appended, ['Graphics::Grid::Unit'],
+        '$unit->append($another_unit) results a unit' );
+    is( $appended->string, '1npc, 2npc, 3npc, 4cm, 5cm, 6cm', 'append()' );
+
+    is( $u1->insert( $u4, 1 )->string,
+        '1npc, 2npc, 4cm, 5cm, 6cm, 3npc', 'insert()' );
+    is(
+        $u1->insert( $u4, -1 )->string,
+        $u4->append($u1)->string,
+        'insert() before'
+    );
+    is(
+        $u1->insert( $u4, 3 )->string,
+        $u1->append($u4)->string,
+        'insert() after'
+    );
+
 }
 
 ok( Graphics::Grid::Unit->is_absolute_unit('cm'),   'is_absolute_unit' );

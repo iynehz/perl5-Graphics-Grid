@@ -21,7 +21,7 @@ use overload
   'eq'     => 'equal',
   fallback => 1;
 
-around BUILDARGS($orig, $class : @rest) {
+around BUILDARGS( $orig, $class : @rest ) {
     my %params;
     if ( @rest == 1 ) {
         if ( ref( $rest[0] ) ne 'HASH' ) {
@@ -56,7 +56,7 @@ Array ref of units.
 Possible units are:
 
 =for :list
-*npc
+* npc
 Normalised Parent Coordinates (the default). The origin of the viewport is
 (0, 0) and the viewport has a width and height of 1 unit. For example,
 (0.5, 0.5) is the centre of the viewport.
@@ -94,6 +94,14 @@ with qw(
   Graphics::Grid::UnitLike
 );
 
+=include attr_elems@Graphics::Grid::UnitLike
+
+=cut
+
+method elems () {
+    return scalar( @{ $self->value } );
+}
+
 =method at($idx)
 
 This method returns an object of the same Graphics::Grid::Unit class.
@@ -112,21 +120,24 @@ C<$idx> is applied like wrap-indexing. So below are same as above.
 
 =cut
 
+fun _x_at ($attr) {
+    return method($idx) {
+        my $x = $self->$attr;
+        return $x->[ $idx % scalar( @{$x} ) ];
+    };
+}
+*_value_at = _x_at('value');
+*_unit_at  = _x_at('unit');
+
+method slice ($indices) {
+    my @value = map { $self->_value_at($_) } @$indices;
+    my @unit  = map { $self->_unit_at($_) } @$indices;
+    return ref($self)->new( \@value, \@unit );
+}
+
 method at ($idx) {
-    my ( $value, $unit ) =
-      map { $self->$_->[ $idx % scalar( @{ $self->$_ } ) ]; } qw(value unit);
-    return __PACKAGE__->new( value => $value, unit => $unit );
+    return $self->slice([$idx]);
 }
-
-=include attr_elems@Graphics::Grid::UnitLike
-
-=cut
-
-method elems () {
-    return scalar( @{ $self->value } );
-}
-
-method length () { $self->elems; }
 
 =classmethod is_absolute_unit($unit_name)
 
@@ -144,7 +155,7 @@ classmethod is_absolute_unit ($unit_name) {
     return exists( $absolute_units->{$unit_name_coerced} );
 }
 
-=include method_string@Graphics::Grid::UnitLike
+=include methods@Graphics::Grid::UnitLike
 
 =cut
 
@@ -158,42 +169,56 @@ method string () {
     );
 }
 
-=include method_sum@Graphics::Grid::UnitLike
-
-=cut
-
 method _make_operation ( $op, $other, $swap = undef ) {
+    if ( $other->$_isa('Graphics::Grid::UnitList') ) {
+        require Graphics::Grid::UnitList;
+        return $other->_make_operation( $op, $self, !$swap );
+    }
+
     require Graphics::Grid::UnitArithmetic;
     return Graphics::Grid::UnitArithmetic->new( node => $self )
       ->_make_operation( $op, $other, $swap );
 }
 
-method plus ( Maybe[UnitLike] $other, $swap = undef ) {
-    return $self->clone unless defined $other;
-    return $self->_make_operation( '+', $other, $swap );
-}
-
-method minus ( Maybe[UnitLike] $other, $swap = undef ) {
-    return $self->clone unless defined $other;
-    return $self->_make_operation( '-', $other, $swap );
-}
-
-method multiply ( ( ArrayRef [Num] | Num ) $other, $swap = undef ) {
-    return $self->_make_operation( '*', $other, $swap );
-}
-
 method equal ($other, $swap=undef) {
-    return false if ( $self->elems != $other->elems ); 
+    return false if ( $self->elems != $other->elems );
 
-    my $at = fun( $l, $i ) { $l->[ $i % scalar(@{ $_[0] }) ]; };
-    for my $i ( 0 .. $self->elems - 1 ) {
-        unless ($at->( $self->value, $i ) == $at->( $other->value, $i )
-            and $at->( $self->unit, $i ) eq $at->( $other->unit, $i ) )
-        {
-            return false;
+    return (
+        List::AllUtils::all {
+            $self->_value_at($_) == $other->_value_at($_)
+              and $self->_unit_at($_) eq $other->_unit_at($_)
         }
+        ( 0 .. $self->elems - 1 )
+    );
+}
+
+around append( UnitLike $other) {
+    if ( $other->$_isa('Graphics::Grid::Unit') ) {
+        my $merge = fun( $attr, $same ) {
+            my $attr_at = "_${attr}_at";
+            my ( $self_eff_len, $other_eff_len ) =
+              map { scalar( @{ $_->$attr } ) } ( $self, $other );
+
+            # for the simplest case, return aref of only one data
+            if ( $self_eff_len == 1 and $self_eff_len == $other_eff_len ) {
+                my $x = $self->$attr_at(0);
+                if ( $same->( $x, $other->$attr_at(0) ) ) {
+                    return [$x];
+                }
+            }
+            return [
+                ( map { $self->$attr_at($_) }  ( 0 .. $self->elems - 1 ) ),
+                ( map { $other->$attr_at($_) } ( 0 .. $other->elems - 1 ) )
+            ];
+        };
+
+        my $value = $merge->( 'value', sub { $_[0] == $_[1] } );
+        my $unit  = $merge->( 'unit',  sub { $_[0] eq $_[1] } );
+        return ref($self)->new( $value, $unit );
     }
-    return true;
+    else {
+        return $self->$orig($other);
+    }
 }
 
 __PACKAGE__->meta->make_immutable;

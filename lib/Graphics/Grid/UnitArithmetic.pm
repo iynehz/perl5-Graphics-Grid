@@ -87,6 +87,22 @@ with qw(
   Graphics::Grid::UnitLike
 );
 
+=include attr_elems@Graphics::Grid::UnitLike
+
+=cut
+
+method elems() {
+    if ( $self->is_unit ) {
+        return $self->node->elems;
+    }
+    elsif ( $self->is_number ) {
+        return scalar( @{ $self->node } );
+    }
+    else {
+        return List::AllUtils::max( map { $_->elems } @{ $self->children } );
+    }
+}
+
 =method at($idx)
 
 This method returns an object of the same Graphics::Grid::UnitArithmetic class.
@@ -112,69 +128,27 @@ C<$idx> is applied like wrap-indexing. So below is same as above.
 =cut
 
 method at($idx) {
+    return $self->slice([$idx]);
+}
+
+method slice($indices) {
+    my $class = ref($self);
     if ( $self->is_unit ) {
-        return __PACKAGE__->new( node => $self->node->at($idx) );
+        return $class->new( node => $self->node->slice($indices) );
     }
     elsif ( $self->is_number ) {
-        return __PACKAGE__->new(
-            node => [ $self->node->[ $idx % $self->elems ] ] );
+        return $class->new(
+            node => [ @{$self->node}[ map { $_ % $self->elems } @$indices] ] );
     }
     else {
-        return __PACKAGE__->new(
+        return $class->new(
             node     => $self->node,
-            children => [ map { $_->at($idx) } @{ $self->children } ]
+            children => [ map { $_->slice($indices) } @{ $self->children } ]
         );
     }
 }
 
-=include attr_elems@Graphics::Grid::UnitLike
-
-=cut
-
-method elems() {
-    if ( $self->is_unit ) {
-        return $self->node->elems;
-    }
-    elsif ( $self->is_number ) {
-        return scalar( @{ $self->node } );
-    }
-    else {
-        return List::AllUtils::max( map { $_->elems } @{ $self->children } );
-    }
-}
-
-=method is_unit
-
-Checks if the object is a Graphics::Grid::Unit.
-
-=cut
-
-method is_unit() {
-    return $self->node->$_isa('Graphics::Grid::Unit');
-}
-
-=method is_number
-
-Checks if the object is an array ref of numbers.
-
-=cut
-
-method is_number() {
-    return Ref::Util::is_arrayref( $self->node );
-}
-
-=method is_arithmetic
-
-Check is the object is an arithmetic operation. It is equivalent
-to C<!($obj-E<ge>is_unit() or $obj-E<ge>is_number())>.
-
-=cut
-
-method is_arithmetic() {
-    return !( $self->is_unit() or $self->is_number() );
-}
-
-=include method_string@Graphics::Grid::UnitLike
+=include methods@Graphics::Grid::UnitLike
 
 =cut
 
@@ -208,30 +182,50 @@ method string() {
     }
 }
 
-=include method_sum@Graphics::Grid::UnitLike
-
-=cut
-
 method _make_operation( $op, $other, $swap = undef ) {
-    return __PACKAGE__->new(
+    if ($other->$_isa('Graphics::Grid::UnitList')) {
+        require Graphics::Grid::UnitList;
+        return $other->_make_operation($op, $self, !$swap);
+    }
+
+    my $class = ref($self);
+    return $class->new(
         node     => $op,
         children => ( $swap ? [ $other, $self ] : [ $self, $other ] )
     );
 }
 
-method plus( Maybe[UnitLike] $other, $swap = undef ) {
-    return $self->clone unless (defined $other);
-    return $self->_make_operation( '+', $other, $swap );
+=method is_unit
+
+Checks if the object is a Graphics::Grid::Unit.
+
+=cut
+
+method is_unit() {
+    return $self->node->$_isa('Graphics::Grid::Unit');
 }
 
-method minus( Maybe[UnitLike] $other, $swap = undef ) {
-    return $self->clone unless (defined $other);
-    return $self->_make_operation( '-', $other, $swap );
+=method is_number
+
+Checks if the object is an array ref of numbers.
+
+=cut
+
+method is_number() {
+    return Ref::Util::is_arrayref( $self->node );
 }
 
-method multiply( ( ArrayRef [Num] | Num ) $other, $swap = undef ) {
-    return $self->_make_operation( '*', $other, $swap );
+=method is_arithmetic
+
+Check is the object is an arithmetic operation. It is equivalent
+to C<!($obj-E<ge>is_unit() or $obj-E<ge>is_number())>.
+
+=cut
+
+method is_arithmetic() {
+    return !( $self->is_unit() or $self->is_number() );
 }
+
 
 __PACKAGE__->meta->make_immutable;
 
