@@ -95,8 +95,6 @@ has 'surface' => (
               unless Cairo::HAS_PDF_SURFACE;
             $surface = Cairo::PdfSurface->create_for_stream(
                 sub { $self->{DATA} .= $_[1] }, $self, $width, $height
-
-                  # $self->can('append_surface_data'), $self, $width, $height
             );
         }
         elsif ( $self->format eq 'ps' ) {
@@ -104,8 +102,6 @@ has 'surface' => (
               unless Cairo::HAS_PS_SURFACE;
             $surface = Cairo::PsSurface->create_for_stream(
                 sub { $self->{DATA} .= $_[1] }, $self, $width, $height
-
-                  # $self->can('append_surface_data'), $self, $width, $height
             );
         }
         elsif ( $self->format eq 'svg' ) {
@@ -113,8 +109,6 @@ has 'surface' => (
               unless Cairo::HAS_SVG_SURFACE;
             $surface = Cairo::SvgSurface->create_for_stream(
                 sub { $self->{DATA} .= $_[1] }, $self, $width, $height
-
-                  # $self->can('append_surface_data'), $self, $width, $height
             );
         }
         else {
