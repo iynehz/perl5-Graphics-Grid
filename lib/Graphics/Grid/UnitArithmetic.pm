@@ -83,25 +83,37 @@ has '+children' => (
     coerce => 1,
 );
 
-with qw(
-  Graphics::Grid::UnitLike
-);
-
 =include attr_elems@Graphics::Grid::UnitLike
 
 =cut
 
-method elems() {
+method elems () {
     if ( $self->is_unit ) {
         return $self->node->elems;
     }
-    elsif ( $self->is_number ) {
-        return scalar( @{ $self->node } );
-    }
-    else {
+    elsif ( $self->is_arithmetic ) {
         return List::AllUtils::max( map { $_->elems } @{ $self->children } );
     }
+    else {
+        return scalar( @{ $self->node } );
+    }
 }
+
+method is_null_unit () {
+    if ( $self->is_unit ) {
+        return $self->node->is_null_unit;
+    }
+    elsif ( $self->is_arithmetic ) {
+        return List::AllUtils::all { $_->is_null_unit } @{ $self->children };
+    }
+    else {
+        return true;
+    }
+}
+
+with qw(
+  Graphics::Grid::UnitLike
+);
 
 =method at($idx)
 
@@ -127,18 +139,19 @@ C<$idx> is applied like wrap-indexing. So below is same as above.
 
 =cut
 
-method at($idx) {
-    return $self->slice([$idx]);
+method at ($idx) {
+    return $self->slice( [$idx] );
 }
 
-method slice($indices) {
+method slice ($indices) {
     my $class = ref($self);
     if ( $self->is_unit ) {
         return $class->new( node => $self->node->slice($indices) );
     }
     elsif ( $self->is_number ) {
         return $class->new(
-            node => [ @{$self->node}[ map { $_ % $self->elems } @$indices] ] );
+            node => [ @{ $self->node }[ map { $_ % $self->elems } @$indices ] ]
+        );
     }
     else {
         return $class->new(
@@ -152,7 +165,7 @@ method slice($indices) {
 
 =cut
 
-method string() {
+method string () {
     if ( $self->is_unit ) {
         return $self->node->string;
     }
@@ -175,17 +188,16 @@ method string() {
                     }
                 }
                 $format //= "%s%s%s";
-                sprintf( $format,
-                    $arg0->string, $self->node, $arg1->string );
+                sprintf( $format, $arg0->string, $self->node, $arg1->string );
             } ( 0 .. $self->elems - 1 )
         );
     }
 }
 
-method _make_operation( $op, $other, $swap = undef ) {
-    if ($other->$_isa('Graphics::Grid::UnitList')) {
+method _make_operation ( $op, $other, $swap = undef ) {
+    if ( $other->$_isa('Graphics::Grid::UnitList') ) {
         require Graphics::Grid::UnitList;
-        return $other->_make_operation($op, $self, !$swap);
+        return $other->_make_operation( $op, $self, !$swap );
     }
 
     my $class = ref($self);
@@ -201,7 +213,7 @@ Checks if the object is a Graphics::Grid::Unit.
 
 =cut
 
-method is_unit() {
+method is_unit () {
     return $self->node->$_isa('Graphics::Grid::Unit');
 }
 
@@ -211,7 +223,7 @@ Checks if the object is an array ref of numbers.
 
 =cut
 
-method is_number() {
+method is_number () {
     return Ref::Util::is_arrayref( $self->node );
 }
 
@@ -222,10 +234,9 @@ to C<!($obj-E<ge>is_unit() or $obj-E<ge>is_number())>.
 
 =cut
 
-method is_arithmetic() {
+method is_arithmetic () {
     return !( $self->is_unit() or $self->is_number() );
 }
-
 
 __PACKAGE__->meta->make_immutable;
 

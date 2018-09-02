@@ -6,6 +6,7 @@ use Graphics::Grid::Class;
 
 # VERSION
 
+use List::AllUtils;
 use Scalar::Util qw(looks_like_number);
 use Type::Params ();
 use Types::Standard qw(Str ArrayRef Any Num Maybe);
@@ -24,24 +25,36 @@ use overload
 
 has _list => ( is => 'ro', default => sub { [] } );
 
-has _elements_length =>
-  ( is => 'ro', lazy => 1, builder => '_build__elements_length' );
+=include attr_elems@Graphics::Grid::UnitLike
+
+=cut
+
+has elems =>
+  ( is => 'ro', lazy => 1, builder => '_build_elems', init_arg => undef );
+
+method _build_elems () {
+    return List::AllUtils::sum( map { $_->elems } @{ $self->_list } );
+}
+
+has is_null_unit => (
+    is       => 'ro',
+    lazy     => 1,
+    builder  => '_build_is_null_unit',
+    init_arg => undef
+);
+
+method _build_is_null_unit () {
+    return ( List::AllUtils::all { $_->is_null_unit } @{ $self->_list } );
+}
 
 with qw(
   Graphics::Grid::UnitLike
 );
 
-=include attr_elems@Graphics::Grid::UnitLike
-
-=cut
-
-method elems () {
-    return List::AllUtils::sum( map { $_->elems } @{ $self->_list } );
-}
-
 around BUILDARGS( $orig, $class : UnitLike @rest ) {
+
     # unfold if an element is already a UnitList.
-    my @list = map { $_->$_isa($class) ? @{$_->_list} : $_ } @rest;
+    my @list = map { $_->$_isa($class) ? @{ $_->_list } : $_ } @rest;
     $class->$orig( _list => \@list );
 }
 
@@ -53,9 +66,9 @@ around BUILDARGS( $orig, $class : UnitLike @rest ) {
 
 =cut
 
-method slice($indices) {
+method slice ($indices) {
     my $class = ref($self);
-    return $class->new(map { $self->at($_) } @$indices);
+    return $class->new( map { $self->at($_) } @$indices );
 }
 
 method at ($idx) {
@@ -76,7 +89,9 @@ method string () {
 
 method _make_operation ( $op, $other, $swap = undef ) {
     my $class = ref($self);
-    return $class->new(map { $self->at($_)->_make_operation($op, $other->at($_)) } (0 .. $self->elems - 1));
+    return $class->new(
+        map { $self->at($_)->_make_operation( $op, $other->at($_) ) }
+          ( 0 .. $self->elems - 1 ) );
 }
 
 __PACKAGE__->meta->make_immutable;

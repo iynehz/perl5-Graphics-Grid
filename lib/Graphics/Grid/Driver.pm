@@ -180,6 +180,9 @@ classmethod _transform_unit_to_cm( $unit, $idx, $gp, $length_cm ) {
         my $font_size = $gp->at($idx)->fontsize->[0];
         return points_to_cm( $font_size * $value );
     }
+    elsif ( $unit eq 'null' ) {
+        return 0;
+    }
     else {
         die "unsupported unit type '$unit'";
     }

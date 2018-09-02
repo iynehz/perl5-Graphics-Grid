@@ -87,7 +87,13 @@ A hook to allow a grob class to modify its vp before being drawn.
 =cut
 
 method make_context() {
-    return $self->clone;
+    my $obj = $self->clone;
+    if (my $vp = $obj->vp) {
+        if ($vp->layout) {
+            $vp->_set_layout($vp->layout->_process_null_unit());
+        }
+    }
+    return $obj;
 }
 
 1;

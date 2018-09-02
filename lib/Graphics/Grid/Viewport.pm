@@ -83,6 +83,7 @@ Indices of columns occupied by this viewport in its parent's layout.
 has layout => (
     is  => 'ro',
     isa => InstanceOf ["Graphics::Grid::Layout"],
+    writer => '_set_layout',
 );
 has [qw(layout_pos_row layout_pos_col)] => (
     is  => 'ro',

@@ -37,8 +37,9 @@ my @cases_constructor = (
                 Graphics::Grid::Unit->new(0.5),
             ],
         ],
-        elems  => 3,
-        string => '1cm-0.5npc, 2cm-0.5npc, 3cm-0.5npc',
+        elems        => 3,
+        string       => '1cm-0.5npc, 2cm-0.5npc, 3cm-0.5npc',
+        is_null_unit => 0,
     },
     {
         params => [
@@ -54,8 +55,9 @@ my @cases_constructor = (
                 ),
             ],
         ],
-        elems  => 3,
-        string => '2*(1cm+0.5npc), 2*(2cm+0.5npc), 2*(3cm+0.5npc)',
+        elems        => 3,
+        string       => '2*(1cm+0.5npc), 2*(2cm+0.5npc), 2*(3cm+0.5npc)',
+        is_null_unit => 0,
     },
     {
         params => [
@@ -64,15 +66,16 @@ my @cases_constructor = (
                 Graphics::Grid::UnitArithmetic->new(
                     node     => '+',
                     children => [
-                        Graphics::Grid::Unit->new( [ 1, 2, 3 ], "cm" ),
-                        Graphics::Grid::Unit->new(0.5),
+                        Graphics::Grid::Unit->new( [ 1, 2, 3 ], "null" ),
+                        Graphics::Grid::Unit->new( 0.5, 'null' ),
                     ],
                 ),
                 [2],
             ],
         ],
         elems  => 3,
-        string => '(1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2',
+        string => '(1null+0.5null)*2, (2null+0.5null)*2, (3null+0.5null)*2',
+        is_null_unit => 1,
     },
 );
 
@@ -87,10 +90,10 @@ for my $case (@cases_constructor) {
     if ( exists $case->{string} ) {
         is( $ua->string, $case->{string}, 'string()' );
     }
-    else {
-        diag( $ua->string );
+    if ( exists $case->{is_null_unit} ) {
+        my $ok = $case->{is_null_unit} ? $ua->is_null_unit : !$ua->is_null_unit;
+        ok( $ok, 'is_null_unit()' );
     }
-
 }
 
 {
@@ -127,12 +130,13 @@ for my $case (@cases_constructor) {
     );
     is( $ul1->string, '(1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2, 1npc',
         '$ua->append()' );
-
     is(
         $u1->append($ua2)->string,
         '1npc, (1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2',
         '$ua->append()'
     );
+
+    ok(!$ul1->is_null_unit(), '$ul->is_null_unit');
 
     is(
         $ul1->slice( [ 2, 3 ] )->string,
@@ -150,6 +154,16 @@ for my $case (@cases_constructor) {
         '(1cm+0.5npc)*2+1cm, (2cm+0.5npc)*2+2cm, (3cm+0.5npc)*2+3cm, 1npc+1cm',
         'ul overload +'
     );
+
+}
+
+{
+    my $u1 = Graphics::Grid::Unit->new([1,2,3], 'null');
+    my $u2 = Graphics::Grid::Unit->new([4,5], 'null');
+    my $ul2 = $u1->append($u2*2);
+
+    is ($ul2->elems, 5, '$ul->elems');
+    ok ($ul2->is_null_unit, '$ul->is_null_unit');
 }
 
 done_testing;

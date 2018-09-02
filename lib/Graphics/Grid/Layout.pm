@@ -6,12 +6,15 @@ use Graphics::Grid::Class;
 
 # VERSION
 
+use Eval::Closure;
 use List::AllUtils qw(minmax reduce);
 use Types::Standard qw(Bool Int InstanceOf Str);
 use namespace::autoclean;
 
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);
+
+with qw(MooseX::Clone);
 
 my $PositiveInt = Int->where( sub { $_ > 0 } );
 
@@ -25,7 +28,10 @@ Number of columns in the layout.
 
 =cut
 
-has [qw(nrow ncol)] => ( is => 'rw', isa => $PositiveInt, default => 1 );
+has nrow =>
+  ( is => 'ro', isa => $PositiveInt, writer => '_set_nrow', default => 1 );
+has ncol =>
+  ( is => 'ro', isa => $PositiveInt, writer => '_set_ncol', default => 1 );
 
 =attr width
 
@@ -33,16 +39,26 @@ has [qw(nrow ncol)] => ( is => 'rw', isa => $PositiveInt, default => 1 );
 
 =cut
 
-has widths =>
-  ( is => 'rw', isa => UnitLike, lazy => 1, builder => '_build_widths' );
-has heights =>
-  ( is => 'rw', isa => UnitLike, lazy => 1, builder => '_build_heights' );
+has widths => (
+    is      => 'ro',
+    isa     => UnitLike,
+    writer  => '_set_widths',
+    lazy    => 1,
+    builder => '_build_widths'
+);
+has heights => (
+    is      => 'ro',
+    isa     => UnitLike,
+    writer  => '_set_heights',
+    lazy    => 1,
+    builder => '_build_heights'
+);
 
-method _build_widths() {
+method _build_widths () {
     return Graphics::Grid::Unit->new( [ (1) x $self->ncol ], "null" );
 }
 
-method _build_heights() {
+method _build_heights () {
     return Graphics::Grid::Unit->new( [ (1) x $self->nrow ], "null" );
 }
 
@@ -61,7 +77,7 @@ with qw(Graphics::Grid::HasJust);
 
 =cut
 
-method dims() { return ( $self->row, $self->ncol ); }
+method dims () { return ( $self->row, $self->ncol ); }
 
 =method cell_width($cell_indices)
 
@@ -73,14 +89,15 @@ Returns the height of a cell.
 
 =cut
 
-method cell_width($cell_indices) {
+method cell_width ($cell_indices) {
     my ( $min_idx, $max_idx ) = minmax(@$cell_indices);
     return (
         reduce { $a + $b }
         map { $self->widths->at($_) } ( $min_idx .. $max_idx )
     );
 }
-method cell_height($cell_indices) {
+
+method cell_height ($cell_indices) {
     my ( $min_idx, $max_idx ) = minmax(@$cell_indices);
     return (
         reduce { $a + $b }
@@ -100,8 +117,46 @@ Graphics::Grid::UnitArithmetic object.
 
 =cut
 
-method width() { return $self->cell_width( [ 0 .. $self->ncol - 1 ] ); }
-method height() { return $self->cell_height( [ 0 .. $self->nrow - 1 ] ); }
+method width () { return $self->cell_width(  [ 0 .. $self->ncol - 1 ] ); }
+method height () { return $self->cell_height( [ 0 .. $self->nrow - 1 ] ); }
+
+# return a new layout object
+method _process_null_unit () {
+
+    # https://www.stat.auckland.ac.nz/~paul/grid/doc/R-1.8.0/nullunit.pdf
+    #
+    # if the layout width/height only involves "null" units then evaluate
+    # the total value and treat the result as the specification of a
+    # relative width/height, but if there are any non-"null" units in the
+    # width/height expression then evaluate the "null" units as if they are
+    # outside of the layout. (that is, a "null" unit means zero.)
+
+    my $is_widths_null_unit  = $self->widths->is_null_unit;
+    my $is_heights_null_unit = $self->heights->is_null_unit;
+
+    return $self
+      unless ( $is_widths_null_unit and $is_heights_null_unit );
+
+    my $to_npc = fun($x) {
+        my @values = map {
+            my $s = ( $x->at($_)->string =~ s/null//gr );
+            eval_closure( source => "sub { $s }" )->();
+        } ( 0 .. $x->elems - 1 );
+        my $sum = List::AllUtils::sum(@values);
+        return Graphics::Grid::Unit->new( [ map { $_ / $sum } @values ],
+            'npc' );
+    };
+
+    my $layout = $self->clone;
+
+    if ($is_widths_null_unit) {
+        $layout->_set_widths( $to_npc->( $layout->widths ) );
+    }
+    if ($is_heights_null_unit) {
+        $layout->_set_heights( $to_npc->( $layout->heights ) );
+    }
+    return $layout;
+}
 
 1;
 

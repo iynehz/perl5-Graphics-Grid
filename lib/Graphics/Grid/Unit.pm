@@ -90,6 +90,25 @@ has unit => (
     default => sub { ['npc'] },
 );
 
+has elems =>
+  ( is => 'ro', lazy => 1, builder => '_build_elems', init_arg => undef );
+
+method _build_elems () {
+    return scalar( @{ $self->value } );
+}
+
+has is_null_unit => (
+    is       => 'ro',
+    lazy     => 1,
+    builder  => '_build_is_null_unit',
+    init_arg => undef
+);
+
+method _build_is_null_unit () {
+    return List::AllUtils::all { $_ eq 'null' } @{ $self->unit };
+}
+
+
 with qw(
   Graphics::Grid::UnitLike
 );
@@ -97,10 +116,6 @@ with qw(
 =include attr_elems@Graphics::Grid::UnitLike
 
 =cut
-
-method elems () {
-    return scalar( @{ $self->value } );
-}
 
 =method at($idx)
 
@@ -136,7 +151,7 @@ method slice ($indices) {
 }
 
 method at ($idx) {
-    return $self->slice([$idx]);
+    return $self->slice( [$idx] );
 }
 
 =classmethod is_absolute_unit($unit_name)
@@ -194,16 +209,19 @@ method equal ($other, $swap=undef) {
 
 around append( UnitLike $other) {
     if ( $other->$_isa('Graphics::Grid::Unit') ) {
-        my $merge = fun( $attr, $same ) {
+        my $merge = fun( $attr, $same, $check_single ) {
             my $attr_at = "_${attr}_at";
-            my ( $self_eff_len, $other_eff_len ) =
-              map { scalar( @{ $_->$attr } ) } ( $self, $other );
 
-            # for the simplest case, return aref of only one data
-            if ( $self_eff_len == 1 and $self_eff_len == $other_eff_len ) {
-                my $x = $self->$attr_at(0);
-                if ( $same->( $x, $other->$attr_at(0) ) ) {
-                    return [$x];
+            if ($check_single) {
+                my ( $self_eff_len, $other_eff_len ) =
+                  map { scalar( @{ $_->$attr } ) } ( $self, $other );
+
+                # for the simplest case, return aref of only one data
+                if ( $self_eff_len == 1 and $self_eff_len == $other_eff_len ) {
+                    my $x = $self->$attr_at(0);
+                    if ( $same->( $x, $other->$attr_at(0) ) ) {
+                        return [$x];
+                    }
                 }
             }
             return [
@@ -212,8 +230,8 @@ around append( UnitLike $other) {
             ];
         };
 
-        my $value = $merge->( 'value', sub { $_[0] == $_[1] } );
-        my $unit  = $merge->( 'unit',  sub { $_[0] eq $_[1] } );
+        my $value = $merge->( 'value', sub { $_[0] == $_[1] }, false);
+        my $unit  = $merge->( 'unit',  sub { $_[0] eq $_[1] }, true);
         return ref($self)->new( $value, $unit );
     }
     else {

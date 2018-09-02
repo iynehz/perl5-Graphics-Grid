@@ -121,6 +121,11 @@ for my $case (@cases_constructor) {
         'insert() after'
     );
 
+    ok( !$u1->is_null_unit, 'is_null_unit()' );
+    ok( !Graphics::Grid::Unit->new( [ 1, 1 ], [ 'npc', 'null' ] )->is_null_unit,
+        'is_null_unit()' );
+    ok( Graphics::Grid::Unit->new( [ 1, 1 ], 'null' )->is_null_unit,
+        'is_null_unit()' );
 }
 
 ok( Graphics::Grid::Unit->is_absolute_unit('cm'),   'is_absolute_unit' );

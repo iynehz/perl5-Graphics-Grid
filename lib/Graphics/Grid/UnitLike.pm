@@ -32,6 +32,8 @@ requires 'elems';
 
 method length() { $self->elems; }
 
+requires 'is_null_unit';
+
 =method at
 
 =cut
