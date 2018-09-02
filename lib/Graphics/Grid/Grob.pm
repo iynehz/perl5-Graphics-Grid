@@ -52,7 +52,11 @@ has elems => (
     init_arg => undef
 );
 
-has name => ( is => 'rw', isa => Str, default => '' );
+has name => ( is => 'rw', isa => Str, builder => '_build_name' );
+
+method _build_name() {
+    return $self->gen_grob_name();
+}
 
 with qw(
   MooseX::Clone
@@ -94,6 +98,27 @@ method make_context() {
         }
     }
     return $obj;
+}
+
+=classmethod grob_name($prefix="GRID")
+
+Generate a unique name for a grob.
+
+=cut
+
+classmethod gen_grob_name($prefix="GRID") {
+    $class = ref($class) || $class;
+
+    state $count = {};
+
+    my $type = $class =~ s/^Graphics::Grid::Grob:://r;
+    $type = lc($type =~ s/::/_/gr);
+    my $key = "$prefix.$type";
+    return sprintf("$key.%d", $count->{$key}++);
+}
+
+method string() {
+    return sprintf("%s[%s]", ref($self), $self->name);
 }
 
 1;
