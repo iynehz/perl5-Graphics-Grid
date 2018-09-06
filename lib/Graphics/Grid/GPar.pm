@@ -3,6 +3,7 @@ package Graphics::Grid::GPar;
 # ABSTRACT: Graphical parameters used in Graphics::Grid
 
 use Graphics::Grid::Class;
+use MooseX::Aliases;
 
 # VERSION
 
@@ -17,14 +18,24 @@ use Graphics::Grid::Types qw(:all);
 my $LineMitre   = Num->where( sub { $_ >= 1 } );
 my $ZeroToOne   = Num->where( sub { $_ >= 0 and $_ <= 1 } );
 my $NonNegative = Num->where( sub { $_ >= 0 } );
+my $Color = ( ArrayRef [Color] )->plus_coercions( Color, sub { [$_] } )
+  ->plus_coercions( Str, sub { [ Color->coerce($_) ] } );
+
+around BUILDARGS($orig, $class : @rest) {
+    my %params = @rest;
+    return $class->$orig(List::AllUtils::pairgrep { defined $b } %params);
+}
 
 # color properties
-has [qw(col fill)] => (
-    is  => 'ro',
-    isa => (
-        ( ArrayRef [Color] )->plus_coercions( Color, sub { [$_] } )
-          ->plus_coercions( Str, sub { [ Color->coerce($_) ] } )
-    ),
+has col => (
+    is     => 'ro',
+    isa    => $Color,
+    coerce => 1,
+    alias  => [qw(color colour)],
+);
+has fill => (
+    is     => 'ro',
+    isa    => $Color,
     coerce => 1,
 );
 has alpha => (
@@ -38,12 +49,14 @@ has alpha => (
 has lty => (
     is     => 'ro',
     isa    => ( ArrayRef [LineType] )->plus_coercions(ArrayRefFromValue),
-    coerce => 1
+    coerce => 1,
+    alias  => 'linetype',
 );
 has lwd => (
     is     => 'ro',
     isa    => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
-    coerce => 1
+    coerce => 1,
+    alias => 'linewidth',
 );
 has lex => (
     is      => 'ro',
@@ -76,12 +89,14 @@ has fontsize => (
 has fontfamily => (
     is     => 'ro',
     isa    => ( ArrayRef [Str] )->plus_coercions(ArrayRefFromValue),
-    coerce => 1
+    coerce => 1,
+    alias  => 'family',
 );
 has fontface => (
     is     => 'ro',
     isa    => ( ArrayRef [FontFace] )->plus_coercions(ArrayRefFromValue),
-    coerce => 1
+    coerce => 1,
+    alias  => 'face',
 );
 has lineheight => (
     is     => 'ro',
@@ -166,7 +181,7 @@ would not have this parameter either. For example,
     Graphics::Grid::GPar->new(col => 'red', fill => 'blue');
  
 For a cumulative parameter, the values of $gp1 and $gp2 are multiplied. If
-the arrayrefs in $gp1 and $gp2 are not of same length, the shorter one
+the array refs in $gp1 and $gp2 are not of same length, the shorter one
 would be padded with 1 when multiplying. That is,
 
     my $gp1 = Graphics::Grid::GPar->new(lex => [1, 2, 3]);
