@@ -22,7 +22,7 @@ my $Color = ( ArrayRef [Color] )->plus_coercions( Color, sub { [$_] } )
   ->plus_coercions( Str, sub { [ Color->coerce($_) ] } );
 
 around BUILDARGS($orig, $class : @rest) {
-    my %params = @rest;
+    my %params = @rest == 1 ? %{$rest[0]} : @rest;
     return $class->$orig(List::AllUtils::pairgrep { defined $b } %params);
 }
 
@@ -100,7 +100,7 @@ has fontface => (
 );
 has lineheight => (
     is     => 'ro',
-    isa    => (ArrayRef)->plus_coercions(ArrayRefFromValue),
+    isa    => (ArrayRef[$NonNegative])->plus_coercions(ArrayRefFromValue),
     coerce => 1
 );
 

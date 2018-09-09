@@ -79,6 +79,7 @@ declare UnitName, as Enum [
     qw(
       npc char native null
       cm inches mm points picas
+      lines
       )
 ];
 coerce UnitName, from Str, via {

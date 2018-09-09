@@ -70,6 +70,10 @@ Millimeters. 10 mm = 1 cm.
 Points. 72.27 pt = 1 in.
 * picas
 Picas. 1 pc = 12 pt.
+* lines
+Lines of text. Locations and dimensions are in terms of multiples of the
+default text size of the viewport (as specified by the viewport's
+C<fontsize> and C<lineheight>).
 * char
 Multiples of nominal font height of the viewport (as specified by the
 viewport's C<fontsize>).
