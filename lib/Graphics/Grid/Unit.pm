@@ -188,6 +188,14 @@ method string () {
     );
 }
 
+=method as_hashref()
+
+=cut
+
+method as_hashref() {
+    return { unit => $self->unit, value => $self->value };
+}
+
 method _make_operation ( $op, $other, $swap = undef ) {
     if ( $other->$_isa('Graphics::Grid::UnitList') ) {
         require Graphics::Grid::UnitList;
