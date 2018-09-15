@@ -14,6 +14,12 @@ use Graphics::Grid::Types qw(UnitLike);
 
 with qw(MooseX::Clone);
 
+use overload
+  '+'      => 'plus',
+  '-'      => 'minus',
+  '*'      => 'multiply',
+  fallback => 1;
+
 =tmpl attr_elems
 
 =method elems

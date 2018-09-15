@@ -17,12 +17,6 @@ use Graphics::Grid::Types qw(:all);
 
 extends 'Forest::Tree';
 
-use overload
-  "+"        => 'plus',
-  "-"        => 'minus',
-  "*"        => 'multiply',
-  "fallback" => 1;
-
 has _list => ( is => 'ro', default => sub { [] } );
 
 =include attr_elems@Graphics::Grid::UnitLike

@@ -16,12 +16,6 @@ use Graphics::Grid::Types qw(:all);
 
 extends 'Forest::Tree';
 
-use overload
-  "+"        => 'plus',
-  "-"        => 'minus',
-  "*"        => 'multiply',
-  "fallback" => 1;
-
 =attr node
 
 It can be one of the followings,

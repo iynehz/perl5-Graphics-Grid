@@ -14,9 +14,6 @@ use namespace::autoclean;
 use Graphics::Grid::Types qw(:all);
 
 use overload
-  '+'      => 'plus',
-  '-'      => 'minus',
-  '*'      => 'multiply',
   '=='     => 'equal',
   'eq'     => 'equal',
   fallback => 1;
