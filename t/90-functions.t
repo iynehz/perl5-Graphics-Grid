@@ -12,14 +12,17 @@ use Graphics::Grid::Driver::Cairo;
 pass("Graphics::Grid::Functions loads");
 
 {
-    my $driver = grid_driver( width => 800, height => 600 );
-    is( [ $driver->width, $driver->height ], [ 800, 600 ], 'grid_driver()' );
+    my $driver1 = grid_driver( width => 800, height => 600 );
+    is( [ $driver1->width, $driver1->height ], [ 800, 600 ], 'grid_driver()' );
+ 
+    my $driver2 = Graphics::Grid::Driver::Cairo->new();
+    my $driver2_out = grid_driver( driver => $driver2 );
+    is( [ $driver2_out->width, $driver2_out->height ], [ 1000, 1000 ], 'grid_driver()' );
 }
 
 {
-    my $driver = Graphics::Grid::Driver::Cairo->new();
-    my $driver_out = grid_driver( driver => $driver );
-    is( [ $driver->width, $driver->height ], [ 1000, 1000 ], 'grid_driver()' );
+    my $vptree = viewport_tree(viewport(), [viewport()]);
+    isa_ok($vptree, ['Graphics::Grid::ViewportTree'], 'viewport_tree()');
 }
 
 {

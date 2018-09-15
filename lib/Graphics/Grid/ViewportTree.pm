@@ -23,7 +23,15 @@ method _build_name() {
 }
 
 around BUILDARGS($orig, $class : @rest) {
-    my %params = @_;
+    my %params;
+    if (@rest == 1) {
+        %params = %{$rest[0]};
+    }
+    elsif (@rest == 2 and $rest[0]->$_isa('Graphics::Grid::Viewport') ) {
+        %params = ( node => $rest[0], children => $rest[1] );
+    } else {
+        %params = @rest;
+    }
     my $children = ( delete $params{children} ) // [];
     $children =
       [ map { $_->$_isa(__PACKAGE__) ? $_ : __PACKAGE__->new( node => $_ ); }

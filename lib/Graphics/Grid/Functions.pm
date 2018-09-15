@@ -7,12 +7,14 @@ use Graphics::Grid::Setup;
 # VERSION
 
 use Module::Load;
+use Types::Standard qw(ArrayRef);
 
 use Graphics::Grid;
 use Graphics::Grid::GPar;
 use Graphics::Grid::Unit;
 use Graphics::Grid::Layout;
 use Graphics::Grid::Viewport;
+use Graphics::Grid::ViewportTree;
 use Graphics::Grid::GTree;
 use Graphics::Grid::Grill;
 
@@ -22,7 +24,7 @@ use parent qw(Exporter::Tiny);
 
 our @EXPORT_OK = (
     qw(
-      unit gpar viewport grid_layout
+      unit gpar viewport viewport_tree grid_layout
       grid_write grid_draw grid_driver
       push_viewport pop_viewport up_viewport down_viewport seek_viewport
       gtree grill grid_grill
@@ -44,6 +46,10 @@ sub gpar {
 
 sub viewport {
     return Graphics::Grid::Viewport->new(@_);
+}
+
+sub viewport_tree {
+    return Graphics::Grid::ViewportTree->new(@_);
 }
 
 sub grid_layout {
@@ -83,7 +89,7 @@ sub grid_grill {
     return $grid->draw($grill);
 }
 
-fun gen_grob_name($grob, @rest) {
+fun gen_grob_name ($grob, @rest) {
     return $grob->gen_grob_name(@rest);
 }
 
@@ -154,6 +160,10 @@ It's same as C<Graphics::Grid::Unit-E<gt>new>.
 =head2 viewport(%params)
 
 It's same as C<Graphics::Grid::Viewport-E<gt>new>.
+
+=head2 viewport_tree($parent, $children)
+
+It's same as C<Graphics::Grid::ViewportTree-E<gt>new>.
 
 =head2 layout(%prams)
 
