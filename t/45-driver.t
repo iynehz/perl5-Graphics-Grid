@@ -5,6 +5,7 @@ use warnings;
 
 use Test2::V0;
 
+use Graphics::Grid;
 use Graphics::Grid::GPar;
 use Graphics::Grid::Unit;
 use Graphics::Grid::Util qw(points_to_cm);
@@ -15,7 +16,10 @@ package _Test::Graphics::Grid::Driver {
 
     BEGIN {
         for my $func (
-            ( map { "draw_$_" } qw(circle points polyline polygon rect segments text) ),
+            (
+                map { "draw_$_" }
+                qw(circle points polyline polygon rect segments text)
+            ),
             qw(data write)
           )
         {
@@ -25,9 +29,15 @@ package _Test::Graphics::Grid::Driver {
     }
 };
 
-my $test_driver =
-  _Test::Graphics::Grid::Driver->new( width => 1000, height => 1000 );
+my $test_driver = _Test::Graphics::Grid::Driver->new(
+    width  => 1000,
+    height => 1000
+);
 ok( $test_driver, "test driver initialized" );
+
+my $grid = Graphics::Grid->new(driver => $test_driver);
+ok($test_driver->current_vptree, 'driver has a default vptree');
+ok($test_driver->current_gp, 'driver has a default gp');
 
 my $unit = Graphics::Grid::Unit->new(
     value => [ 0.5,   1,        2,    3,    2 ],
@@ -38,8 +48,7 @@ is(
     [
         map {
             $test_driver->_transform_width_to_cm( $unit, $_,
-                $test_driver->default_gpar(),
-                100, 60 )
+                $test_driver->default_gpar(), 100 )
         } ( 0 .. $unit->elems - 1 )
     ],
     [ 50, 2.54, 2, 0.3, points_to_cm( 2 * 11 ) ],
@@ -49,8 +58,7 @@ is(
     [
         map {
             $test_driver->_transform_height_to_cm( $unit, $_,
-                $test_driver->default_gpar(),
-                60, 100 )
+                $test_driver->default_gpar(), 100 )
         } ( 0 .. $unit->elems - 1 )
     ],
     [ 50, 2.54, 2, 0.3, points_to_cm( 2 * 11 ) ],

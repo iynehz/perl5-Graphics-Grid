@@ -32,13 +32,19 @@ with qw(
   Graphics::Grid::HasJust
 );
 
-method _build_elems() {
+method _build_elems () {
     return max( map { $self->$_->elems } qw(x y width height) );
 }
 
-method _draw($grid) {
-    $grid->driver->draw_rect($self);
+method _draw ($grid) {
+    return $grid->driver->draw_rect($self);
 }
+
+#method extents ($grid) {
+#    my @v = map { $grid->driver->_transform_width_to_cm( $self->width, $_ ) }
+#      ( 0 .. $self->elems - 1 );
+#    return Graphics::Grid::Unit->new( \@v, 'cm' );
+#}
 
 __PACKAGE__->meta->make_immutable;
 

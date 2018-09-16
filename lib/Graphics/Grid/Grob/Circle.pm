@@ -38,13 +38,20 @@ with qw(
   Graphics::Grid::Positional
 );
 
-method _build_elems() {
+method _build_elems () {
     return max( map { $self->$_->elems } qw(x y r) );
 }
 
-method _draw($grid) {
-    $grid->driver->draw_circle($self);
+method _draw ($grid) {
+    return $grid->driver->draw_circle($self);
 }
+
+#method extents ($grid) {
+#    my @v =
+#      map { $grid->driver->_transform_width_to_cm( $self->r, $_ ); }
+#      ( 0 .. $self->elems - 1 );
+#    return Graphics::Grid::Unit->new( \@v, 'cm' );
+#}
 
 __PACKAGE__->meta->make_immutable;
 

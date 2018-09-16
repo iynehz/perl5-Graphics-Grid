@@ -88,6 +88,10 @@ method _make_operation ( $op, $other, $swap = undef ) {
           ( 0 .. $self->elems - 1 ) );
 }
 
+method transform_to_cm($grid, $idx, $gp, $length_cm) {
+    return $self->at($_)->transform_to_cm($grid, $idx, $gp, $length_cm);
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;

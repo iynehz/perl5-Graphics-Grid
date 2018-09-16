@@ -12,6 +12,7 @@ our @EXPORT_OK = qw(
   dots_to_cm cm_to_dots
   dots_to_inches inches_to_dots
   points_to_cm cm_to_points
+  gcd lcm
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
@@ -23,6 +24,15 @@ fun cm_to_dots( $x, $dpi ) { $x / 2.54 * $dpi; }
 
 fun points_to_cm($x) { $x / 72.27 * 2.54; }
 fun cm_to_points($x) { $x / 2.54 * 72.27; }
+
+fun gcd( $x, $y ) {
+    ( $x, $y ) = ( $y, $x % $y ) while $y;
+    return $x;
+}
+
+fun lcm( $x, $y ) {
+    return ( $x * $y / gcd( $x, $y ) );
+}
 
 1;
 

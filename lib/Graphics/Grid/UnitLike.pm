@@ -7,10 +7,11 @@ use Graphics::Grid::Role;
 # VERSION
 
 use List::AllUtils qw(reduce);
+use Type::Params;
 use Types::Standard qw(ArrayRef Maybe Num);
 use namespace::autoclean;
 
-use Graphics::Grid::Types qw(UnitLike);
+use Graphics::Grid::Types qw(UnitLike UnitName);
 
 with qw(MooseX::Clone);
 
@@ -116,6 +117,29 @@ method minus( Maybe [UnitLike] $other, $swap = undef ) {
 
 method multiply( ( ArrayRef [Num] | Num ) $other, $swap = undef ) {
     return $self->_make_operation( '*', $other, $swap );
+}
+
+=method transform_to_cm($grid, $idx, $gp, $length_cm)
+
+=cut
+
+requires 'transform_to_cm';
+
+=classmethod is_absolute_unit($unit_name)
+
+This is a class method. It tells if the given unit name is absolute or not.
+
+    my $is_absolute = Graphics::Grid::UnitLike->is_absolute_unit('cm');
+
+=cut
+
+classmethod is_absolute_unit ($unit_name) {
+    # cannot put the unit in function signature, as we need coercion.
+    state $check = Type::Params::compile(UnitName);
+    my ($unit_name_coerced) = $check->($unit_name);
+
+    state $absolute_units = { map { $_ => 1 } qw(cm inches mm points picas) };
+    return exists( $absolute_units->{$unit_name_coerced} );
 }
 
 1;

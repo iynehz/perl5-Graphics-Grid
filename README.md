@@ -80,6 +80,10 @@ the interface of the R "grid" library.
 Set the device driver. The value needs to be a consumer of the [Graphics::Grid::Driver](https://metacpan.org/pod/Graphics::Grid::Driver)
 role. Default is a [Graphics::Grid::Driver::Cairo](https://metacpan.org/pod/Graphics::Grid::Driver::Cairo) object.
 
+# CLASS METHODS
+
+## singleton()
+
 # METHODS
 
 ## current\_vptree($all=true)

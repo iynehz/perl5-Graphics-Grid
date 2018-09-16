@@ -15,10 +15,12 @@ use Import::Into;
 use Carp;
 use Data::Dumper ();
 use Function::Parameters 2.0;
+use PerlX::Maybe              ();
 use Safe::Isa                 ();
 use boolean                   ();
 use Moose                     ();
 use Moose::Role               ();
+use MooseX::LazyRequire       ();
 use MooseX::StrictConstructor ();
 
 use List::AllUtils qw(uniq);
@@ -52,23 +54,28 @@ sub _import_tag {
         Carp->import::into($target);
         Data::Dumper->import::into($target);
         Function::Parameters->import::into($target);
+        PerlX::Maybe->import::into($target);
         Safe::Isa->import::into($target);
         boolean->import::into($target);
     }
     elsif ( $tag eq ':class' ) {
         $class->_import_tag( $target, ':base' );
 
-        Function::Parameters->import::into( $target, qw(classmethod :modifiers) );
+        Function::Parameters->import::into( $target,
+            qw(classmethod :modifiers) );
 
         Moose->import::into($target);
+        MooseX::LazyRequire->import::into($target);
         MooseX::StrictConstructor->import::into($target);
     }
     elsif ( $tag eq ':role' ) {
         $class->_import_tag( $target, ':base' );
 
-        Function::Parameters->import::into( $target, qw(classmethod :modifiers) );
+        Function::Parameters->import::into( $target,
+            qw(classmethod :modifiers) );
 
         Moose::Role->import::into($target);
+        MooseX::LazyRequire->import::into($target);
     }
     else {
         croak qq["$tag" is not exported by the $class module\n];

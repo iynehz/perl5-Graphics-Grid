@@ -8,14 +8,17 @@ use Graphics::Grid::Class;
 
 use Cairo;
 use Scalar::Util qw(looks_like_number);
-use List::AllUtils qw(min max pairwise reduce);
+use List::AllUtils qw(minmax min max pairwise reduce);
 use Math::Trig qw(:pi :radial deg2rad);
 use Path::Tiny;
 use Types::Standard qw(Enum Str InstanceOf Num);
 use namespace::autoclean;
 
+use Graphics::Grid::Extents;
 use Graphics::Grid::Unit;
-use Graphics::Grid::Util qw(dots_to_cm cm_to_dots points_to_cm cm_to_points);
+use Graphics::Grid::Util qw(
+  dots_to_cm cm_to_dots points_to_cm cm_to_points
+);
 
 my $AntialiasMode = Enum [qw(default none gray subpixel)];
 my $Format =
@@ -94,22 +97,22 @@ has 'surface' => (
             croak('Your Cairo does not have PDF support!')
               unless Cairo::HAS_PDF_SURFACE;
             $surface = Cairo::PdfSurface->create_for_stream(
-                sub { $self->{DATA} .= $_[1] }, $self, $width, $height
-            );
+                sub { $self->{DATA} .= $_[1] },
+                $self, $width, $height );
         }
         elsif ( $self->format eq 'ps' ) {
             croak('Your Cairo does not have PostScript support!')
               unless Cairo::HAS_PS_SURFACE;
             $surface = Cairo::PsSurface->create_for_stream(
-                sub { $self->{DATA} .= $_[1] }, $self, $width, $height
-            );
+                sub { $self->{DATA} .= $_[1] },
+                $self, $width, $height );
         }
         elsif ( $self->format eq 'svg' ) {
             croak('Your Cairo does not have SVG support!')
               unless Cairo::HAS_SVG_SURFACE;
             $surface = Cairo::SvgSurface->create_for_stream(
-                sub { $self->{DATA} .= $_[1] }, $self, $width, $height
-            );
+                sub { $self->{DATA} .= $_[1] },
+                $self, $width, $height );
         }
         else {
             croak( "Unknown format '" . $self->format . "'" );
@@ -152,11 +155,11 @@ method _set_vptree ( $vptree, $old_vptree = undef ) {
             $width =
               $self->_transform_width_to_cm(
                 $layout->cell_width( $vp->layout_pos_col ),
-                0, $vp->gp, $vp_width, $vp_height );
+                0, $vp->gp, $vp_width );
             $height =
               $self->_transform_height_to_cm(
                 $layout->cell_height( $vp->layout_pos_row ),
-                0, $vp->gp, $vp_width, $vp_height );
+                0, $vp->gp, $vp_height );
 
             my $x_base = ( $unit1 - $layout->width ) * $layout->hjust;
             my $y_base =
@@ -169,9 +172,7 @@ method _set_vptree ( $vptree, $old_vptree = undef ) {
                       ( 0 .. min( @{ $vp->layout_pos_col } ) - 1 )
                 ),
                 0,
-                $vp->gp,
-                $vp_width,
-                $vp_height
+                $vp->gp
               ) +
               $width * 0.5;
             $y = $self->_transform_height_to_cm(
@@ -181,26 +182,20 @@ method _set_vptree ( $vptree, $old_vptree = undef ) {
                       ( 0 .. min( @{ $vp->layout_pos_row } ) - 1 )
                 ),
                 0,
-                $vp->gp,
-                $vp_width,
-                $vp_height
+                $vp->gp
               ) -
               $height * 0.5;
         }
         else {
-            $x =
-              $self->_transform_width_to_cm( $vp->x, 0, $vp->gp, $vp_width,
-                $vp_height );
+            $x = $self->_transform_width_to_cm( $vp->x, 0, $vp->gp, $vp_width );
             $y =
-              $self->_transform_height_to_cm( $vp->y, 0, $vp->gp, $vp_width,
-                $vp_height );
+              $self->_transform_height_to_cm( $vp->y, 0, $vp->gp, $vp_height );
             $width =
-              $self->_transform_width_to_cm( $vp->width, 0, $vp->gp, $vp_width,
-                $vp_height );
+              $self->_transform_width_to_cm( $vp->width, 0, $vp->gp,
+                $vp_width );
             $height =
               $self->_transform_height_to_cm( $vp->height, 0, $vp->gp,
-                $vp_width, $vp_height );
-
+                $vp_height );
         }
 
         $ctx->translate( $x, $y );
@@ -218,14 +213,14 @@ method _set_vptree ( $vptree, $old_vptree = undef ) {
     $self->_current_vp_height_cm($vp_height);
 }
 
+has _matrix_cm_invert => ( is => 'rw' );
+
 method _reset_transform () {
     my $ctx = $self->cairo;
 
     # reset transfom
     my $identity_matrix = Cairo::Matrix->init_identity;
     $ctx->set_matrix($identity_matrix);
-
-    #$ctx->set_font_matrix($identity_matrix);
 
     # set basic transform below
 
@@ -235,6 +230,12 @@ method _reset_transform () {
     # We defaultly use cm as unit
     $self->_set_scale_cm();
 
+    # Store this matrix
+    my $matrix_invert = $ctx->get_matrix;
+    Cairo::Matrix::invert($matrix_invert);
+    $self->_matrix_cm_invert($matrix_invert);
+
+    return;
 }
 
 method _set_scale_cm () {
@@ -245,6 +246,34 @@ method _set_scale_cm () {
 method _unset_scale_cm () {
     my $ctx = $self->cairo;
     $ctx->scale( 2.54 / $self->dpi, -2.54 / $self->dpi );
+}
+
+method _transform_point_to_cm ($point) {
+    my $ctx = $self->cairo;
+
+    my $matrix        = $ctx->get_matrix();
+    my $matrix_invert = Cairo::Matrix::multiply( $self->_matrix_cm_invert,
+        Cairo::Matrix->init_identity );
+    my $matrix1 = Cairo::Matrix::multiply( $ctx->get_matrix, $matrix_invert );
+    my ( $x1, $y1 ) = $matrix1->transform_point(@$point);
+
+    return [ $x1, $y1 ];
+}
+
+# given a list of points [x, y], calculate the extents in the cm scale.
+method _calc_extents (@points) {
+    my @transformed = map { $self->_transform_point_to_cm($_) } @points;
+    my @x           = map { $_->[0] } @transformed;
+    my @y           = map { $_->[1] } @transformed;
+    my ( $xmin, $xmax ) = minmax(@x);
+    my ( $ymin, $ymax ) = minmax(@y);
+
+    return Graphics::Grid::Extents->new(
+        x      => Graphics::Grid::Unit->new($xmin, 'cm'),
+        y      => Graphics::Grid::Unit->new($ymin, 'cm'),
+        width  => Graphics::Grid::Unit->new($xmax - $xmin, 'cm'),
+        height => Graphics::Grid::Unit->new($ymax - $ymin, 'cm'),
+    );
 }
 
 =method data()
@@ -285,12 +314,8 @@ method draw_circle ($circle_grob) {
     my $gp = $self->current_gp;
 
     for my $idx ( 0 .. $circle_grob->elems - 1 ) {
-        my $x =
-          $self->_transform_width_to_cm( $circle_grob->x, $idx, $gp,
-            $vp_width, $vp_height );
-        my $y =
-          $self->_transform_height_to_cm( $circle_grob->y, $idx, $gp,
-            $vp_width, $vp_height );
+        my $x = $self->_transform_width_to_cm( $circle_grob->x, $idx, $gp );
+        my $y = $self->_transform_height_to_cm( $circle_grob->y, $idx, $gp );
         my $r = $self->_transform_width_to_cm( $circle_grob->r, $idx, $gp,
             min( $vp_width, $vp_height ) );
 
@@ -315,18 +340,12 @@ method draw_rect ($rect_grob) {
     my $gp = $self->current_gp;
 
     for my $idx ( 0 .. $rect_grob->elems - 1 ) {
-        my $x =
-          $self->_transform_width_to_cm( $rect_grob->x, $idx, $gp, $vp_width,
-            $vp_height );
-        my $y =
-          $self->_transform_height_to_cm( $rect_grob->y, $idx, $gp, $vp_width,
-            $vp_height );
+        my $x = $self->_transform_width_to_cm( $rect_grob->x, $idx, $gp );
+        my $y = $self->_transform_height_to_cm( $rect_grob->y, $idx, $gp );
         my $width =
-          $self->_transform_width_to_cm( $rect_grob->width, $idx, $gp,
-            $vp_width, $vp_height );
+          $self->_transform_width_to_cm( $rect_grob->width, $idx, $gp );
         my $height =
-          $self->_transform_height_to_cm( $rect_grob->height, $idx, $gp,
-            $vp_width, $vp_height );
+          $self->_transform_height_to_cm( $rect_grob->height, $idx, $gp );
 
         my ( $left, $bottom ) =
           $rect_grob->calc_left_bottom( $x, $y, $width, $height );
@@ -533,7 +552,7 @@ method _select_font_face ($gp) {
         @{ $fontface_to_params->{$fontface} } );
 }
 
-method draw_text ($text_grob) {
+method draw_text ($text_grob, $query=false) {
     my $ctx = $self->cairo;
 
     my $vp_width  = $self->_current_vp_width_cm;
@@ -541,16 +560,14 @@ method draw_text ($text_grob) {
 
     my $gp = $self->current_gp;
 
+    my @extents;
+
     for my $idx ( 0 .. $text_grob->elems - 1 ) {
         my $text = $text_grob->label->[$idx];
         next unless ( length($text) );
 
-        my $x =
-          $self->_transform_width_to_cm( $text_grob->x, $idx, $gp,
-            $vp_width, $vp_height );
-        my $y =
-          $self->_transform_height_to_cm( $text_grob->y, $idx, $gp,
-            $vp_width, $vp_height );
+        my $x = $self->_transform_width_to_cm( $text_grob->x, $idx, $gp );
+        my $y = $self->_transform_height_to_cm( $text_grob->y, $idx, $gp );
 
         my $gp_single = $gp->at($idx);
 
@@ -571,6 +588,8 @@ method draw_text ($text_grob) {
 
         my ( $left, $bottom ) =
           $text_grob->calc_left_bottom( $x, $y, $width, $height );
+        $left   += $exts->{x_bearing};
+        $bottom += $exts->{y_bearing};
 
         $self->_set_color($gp_single);
 
@@ -584,10 +603,26 @@ method draw_text ($text_grob) {
             $ctx->translate( -$x, -$y );
         }
         $ctx->move_to( $left, $bottom );
-        $ctx->show_text($text);
+
+        my $right = $left + $width;
+        my $top   = $bottom + $height;
+        push @extents,
+          $self->_calc_extents(
+            [ $left,  $bottom ],
+            [ $left,  $top ],
+            [ $right, $bottom ],
+            [ $right, $top ]
+          );
+
+        unless ($query) {
+            $ctx->show_text($text);
+        }
 
         $ctx->restore;
     }
+
+    my $extents = reduce { $a->merge($b) } @extents;
+    return $extents;
 }
 
 use Graphics::Grid::Grob::Text;

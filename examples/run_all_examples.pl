@@ -18,7 +18,8 @@ say "example scripts: "
 
 for my $script (@example_scripts) {
     say "running $script";
-    system("$^X -I$FindBin::RealBin/../lib $script");
+    my $rc = system("$^X -I$FindBin::RealBin/../lib $script");
+    die "Failed to run $script" if $rc;
 }
 
 say "done";

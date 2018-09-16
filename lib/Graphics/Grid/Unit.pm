@@ -6,12 +6,15 @@ use Graphics::Grid::Class;
 
 # VERSION
 
+use PerlX::Maybe qw(:all);
+use Ref::Util qw(is_plain_hashref is_plain_arrayref);
 use Scalar::Util qw(looks_like_number);
 use Type::Params ();
-use Types::Standard qw(Str ArrayRef Value Num Maybe);
+use Types::Standard qw(Str ArrayRef ConsumerOf Value Num Maybe);
 use namespace::autoclean;
 
 use Graphics::Grid::Types qw(:all);
+use Graphics::Grid::Util qw(points_to_cm);
 
 use overload
   '=='     => 'equal',
@@ -21,16 +24,55 @@ use overload
 around BUILDARGS( $orig, $class : @rest ) {
     my %params;
     if ( @rest == 1 ) {
-        if ( ref( $rest[0] ) ne 'HASH' ) {
-            return $class->$orig( value => $rest[0] );
+        if ( is_plain_hashref( $rest[0] ) ) {
+            %params = @{ $rest[0] };
+        }
+        else {
+            %params = ( value => $rest[0] );
         }
     }
-    elsif ( @rest == 2
-        and ( ref( $rest[0] ) eq 'ARRAY' or looks_like_number( $rest[0] ) ) )
+    elsif (
+        @rest <= 3
+        and (  is_plain_arrayref( $rest[0] )
+            or looks_like_number( $rest[0] ) )
+      )
     {
-        return $class->$orig( value => $rest[0], unit => $rest[1] );
+        %params = (
+            value => $rest[0],
+            unit  => $rest[1],
+            provided scalar(@rest) == 3, data => $rest[2],
+        );
     }
-    return $class->$orig(@rest);
+    else {
+        %params = @rest;
+    }
+
+    return $class->$orig(%params);
+}
+
+method BUILD ($args) {
+
+    # make 'data' to be of same length as 'value'.
+    my $data = $self->data;
+    if ( defined $data and @$data != $self->elems ) {
+        $self->_set_data( [ @{$data}[ 0 .. $self->elems - 1 ] ] );
+    }
+
+    for my $i ( 0 .. $self->elems - 1 ) {
+        my $unit = $self->_unit_at($i);
+        my $data = $self->_data_at($i);
+        if ( $unit eq 'grobwidth' or $unit eq 'grobheight' ) {
+            unless ( defined $data ) {
+                die
+"'data' shall be supplied for 'grobwidth/height' unit, at index $i.";
+            }
+        }
+        else {
+            if ( defined $data ) {
+                die "'data' shall not be supplied for plain unit, at index $i.";
+            }
+        }
+    }
 }
 
 =attr value
@@ -80,6 +122,10 @@ C<yscale>.
 * null
 Only meaningful for layouts. It indicates what relative fraction of the
 available width/height the column/row occupies.
+* grobwidth
+Multiples of the width of the grob specified in the C<data> attr.
+* grobheight
+Multiples of the height of the grob specified in the C<data> argument.
 
 =cut
 
@@ -89,6 +135,19 @@ has unit => (
       ->plus_coercions( Str, sub { [ UnitName->coerce($_) ] } ),
     coerce  => 1,
     default => sub { ['npc'] },
+);
+
+=attr data
+
+Needed if unit is C<"grobwidth"> or C<"grobheight">.
+
+=cut
+
+has data => (
+    is => 'ro',
+    isa =>
+      ( Maybe [ ArrayRef [ Maybe [ ConsumerOf ['Graphics::Grid::Grob'] ] ] ] ),
+    writer => '_set_data',
 );
 
 has elems =>
@@ -108,7 +167,6 @@ has is_null_unit => (
 method _build_is_null_unit () {
     return List::AllUtils::all { $_ eq 'null' } @{ $self->unit };
 }
-
 
 with qw(
   Graphics::Grid::UnitLike
@@ -142,8 +200,17 @@ fun _x_at ($attr) {
         return $x->[ $idx % scalar( @{$x} ) ];
     };
 }
+
 *_value_at = _x_at('value');
 *_unit_at  = _x_at('unit');
+
+method _data_at ($idx) {
+    my $x = $self->data;
+    if ( defined $x ) {
+        return $x->[$idx];
+    }
+    return undef;
+}
 
 method slice ($indices) {
     my @value = map { $self->_value_at($_) } @$indices;
@@ -153,22 +220,6 @@ method slice ($indices) {
 
 method at ($idx) {
     return $self->slice( [$idx] );
-}
-
-=classmethod is_absolute_unit($unit_name)
-
-This is a class method. It tells if the given unit name is absolute or not.
-
-    my $is_absolute = Graphics::Grid::Unit->is_absolute_unit('cm');
-
-=cut
-
-classmethod is_absolute_unit ($unit_name) {
-    state $check = Type::Params::compile(UnitName);
-    my ($unit_name_coerced) = $check->($unit_name);
-
-    state $absolute_units = { map { $_ => 1 } qw(cm inches mm points picas) };
-    return exists( $absolute_units->{$unit_name_coerced} );
 }
 
 =include methods@Graphics::Grid::UnitLike
@@ -189,8 +240,12 @@ method string () {
 
 =cut
 
-method as_hashref() {
-    return { unit => $self->unit, value => $self->value };
+method as_hashref () {
+    return {
+        unit       => $self->unit,
+        value      => $self->value,
+        maybe data => $self->data
+    };
 }
 
 method _make_operation ( $op, $other, $swap = undef ) {
@@ -239,12 +294,85 @@ around append( UnitLike $other) {
             ];
         };
 
-        my $value = $merge->( 'value', sub { $_[0] == $_[1] }, false);
-        my $unit  = $merge->( 'unit',  sub { $_[0] eq $_[1] }, true);
+        my $value = $merge->( 'value', sub { $_[0] == $_[1] }, false );
+        my $unit  = $merge->( 'unit',  sub { $_[0] eq $_[1] }, true );
         return ref($self)->new( $value, $unit );
     }
     else {
         return $self->$orig($other);
+    }
+}
+
+=method is_absolute()
+
+Returns true if all units in this object are absolute.
+
+=cut
+
+method is_absolute() {
+    return List::AllUtils::all { $self->is_absolute_unit($_) } @{$self->unit};
+}
+
+method _transform_absolute_unit_to_cm ($idx) {
+    my $value = $self->_value_at($idx);
+    my $unit  = $self->_unit_at($idx);
+
+    if ( $unit eq 'cm' ) {
+        return $value;
+    }
+    elsif ( $unit eq 'inches' ) {
+        return $value * 2.54;
+    }
+    elsif ( $unit eq 'mm' ) {
+        return $value / 10;
+    }
+    elsif ( $unit eq 'points' ) {
+        return points_to_cm($value);
+    }
+    elsif ( $unit eq 'picas' ) {
+        return points_to_cm($value) * 12;
+    }
+    else {
+        die "unsupported unit type '$unit'";
+    }
+}
+
+method transform_to_cm ($grid, $idx, $gp, $length_cm) {
+    my $unit = $self->_unit_at($idx);
+
+    if ( $self->is_absolute_unit($unit) ) {
+        return $self->_transform_absolute_unit_to_cm($idx);
+    }
+
+    my $value = $self->_value_at($idx);
+
+    if ( $unit eq 'npc' ) {
+        return $value * $length_cm;
+    }
+    elsif ( $unit eq 'char' ) {
+        my $font_size = $gp->at($idx)->fontsize->[0];
+        return points_to_cm( $font_size * $value );
+    }
+    elsif ( $unit eq 'lines' ) {
+        my $font_size   = $gp->at($idx)->fontsize->[0];
+        my $line_height = $gp->at($idx)->lineheight->[0];
+        return points_to_cm( $font_size * $line_height * $value );
+    }
+    elsif ( $unit eq 'null' ) {
+        return 0;
+    }
+    elsif ( $unit eq 'grobwidth' ) {
+        my $grob    = $unit->_data_at($idx);
+        my $extents = $grob->extents;
+        return $extents->width;
+    }
+    elsif ( $unit eq 'grobheight' ) {
+        my $grob    = $unit->_data_at($idx);
+        my $extents = $grob->extents;
+        return $extents->height;
+    }
+    else {
+        die "unsupported unit type '$unit'";
     }
 }
 

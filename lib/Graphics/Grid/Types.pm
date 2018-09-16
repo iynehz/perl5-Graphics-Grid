@@ -80,6 +80,7 @@ declare UnitName, as Enum [
       npc char native null
       cm inches mm points picas
       lines
+      grobwidth grobheight
       )
 ];
 coerce UnitName, from Str, via {

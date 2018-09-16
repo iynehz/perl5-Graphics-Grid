@@ -11,7 +11,6 @@ use Type::Params ();
 use Types::Standard qw(Str ArrayRef Any Num Maybe);
 use namespace::autoclean;
 
-use Graphics::Grid::Util qw(points_to_cm);
 use Graphics::Grid::Types qw(:all);
 
 extends 'Forest::Tree';
@@ -230,6 +229,92 @@ to C<!($obj-E<ge>is_unit() or $obj-E<ge>is_number())>.
 
 method is_arithmetic () {
     return !( $self->is_unit() or $self->is_number() );
+}
+
+method transform_to_cm ($grid, $idx, $gp, $length_cm ) {
+    my $driver = $grid->driver;
+    if ( $self->is_unit ) {
+        return $self->node->transform_to_cm( $grid, $idx, $gp, $length_cm );
+    }
+    elsif ( $self->is_number ) {
+        return $self->node->[ $idx % scalar( @{ $self->node } ) ];
+    }
+    else {    # is_arithmetic
+        my $op = $self->node;
+        my ( $left, $right ) =
+          map { $_->transform_to_cm( $grid, $idx, $gp, $length_cm ) }
+          @{ $self->children };
+        if ( $op eq '+' ) {
+            return $left + $right;
+        }
+        elsif ( $op eq '-' ) {
+            return $left - $right;
+        }
+        else {    # *
+            return $left * $right;
+        }
+    }
+}
+
+=method reduce()
+
+Try to reduce the tree by evaluating arithmetics.
+Returns a new Graphics::Grid::UnitArithmetic or Graphics::Grid::Unit
+object.
+
+=cut
+
+method reduce () {
+    my $class = ref($self);
+
+    if ( $self->is_unit ) {
+        return $self->node;
+    }
+    elsif ( $self->is_number ) {
+        return $self->clone;
+    }
+    else {
+        my ( $left, $right ) = map { $_->reduce; } @{ $self->children };
+        if (   $left->$_isa('Graphics::Grid::Arithmetic')
+            or $right->$_isa('Graphics::Grid::Arithmetic') )
+        {
+            return $class->new(
+                node     => $self->node,
+                children => [ $left, $right ]
+            );
+        }
+        else {
+            if ( $self->node eq '*' ) {    # one of the children be unit
+                my ( $unit, $number ) =
+                  $left->$_isa('Graphics::Grid::Unit')
+                  ? ( $left, $right )
+                  : ( $right, $left );
+                my @value =
+                  map {
+                    $unit->_value_at($_) * $number->node->[ $_ % @{$number->node} ]
+                  } ( 0 .. List::AllUtils::max($unit->elems, $number->elems) - 1 );
+
+                return Graphics::Grid::Unit->new( \@value, $unit->unit,
+                    $unit->data );
+            }
+            else {
+                if ( $left->is_absolute and $right->is_absolute ) {
+                    my @value = map {
+                        my $a = $left->_transform_absolute_unit_to_cm($_);
+                        my $b = $right->_transform_absolute_unit_to_cm($_);
+                        $self->node eq '+' ? $a + $b : $a - $b;
+                    } ( 0 .. List::AllUtils::max( $left->elems, $right->elems ) - 1 );
+                    return Graphics::Grid::Unit->new( \@value, 'cm' );
+                }
+                else {
+                    return $class->new(
+                        node     => $self->node,
+                        children => [ $left, $right ]
+                    );
+                }
+            }
+        }
+    }
 }
 
 __PACKAGE__->meta->make_immutable;

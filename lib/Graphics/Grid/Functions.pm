@@ -34,7 +34,7 @@ our @EXPORT_OK = (
 
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
-my $grid = Graphics::Grid->new;    # global object
+my $grid = Graphics::Grid->singleton;    # global object
 
 sub unit {
     return Graphics::Grid::Unit->new(@_);
@@ -71,7 +71,7 @@ fun grid_driver ( :$driver = 'Cairo', %rest ) {
     else {
         my $cls = "Graphics::Grid::Driver::$driver";
         load $cls;
-        $grid->driver( $cls->new(%rest) );
+        $grid->driver( $cls->new(%rest, grid => $grid) );
     }
     return $grid->driver;
 }

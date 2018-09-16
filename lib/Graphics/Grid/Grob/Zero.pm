@@ -4,15 +4,30 @@ package Graphics::Grid::Grob::Zero;
 
 use Graphics::Grid::Class;
 
+# VERSION
+
+use namespace::autoclean;
+
+use Graphics::Grid::Extents;
+use Graphics::Grid::Unit;
+
 with qw(
   Graphics::Grid::Grob
 );
 
-# VERSION
+method _build_elems () { 0 }
 
-method _build_elems() { 0 }
+method _draw ($grid) { }
 
-method _draw($grid) { }
+method extents ($grid) {
+    my $zero = Graphics::Grid::Unit->new(0, 'cm');
+    return Graphics::Grid::Extents->new(
+        x      => $zero,
+        y      => $zero,
+        width  => $zero,
+        height => $zero,
+    );
+}
 
 1;
 

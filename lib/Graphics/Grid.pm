@@ -40,11 +40,16 @@ role. Default is a L<Graphics::Grid::Driver::Cairo> object.
 =cut
 
 has driver => (
-    is      => 'rw',
-    lazy    => 1,
-    isa     => ConsumerOf ["Graphics::Grid::Driver"],
-    builder => '_build_driver',
-
+    is        => 'rw',
+    lazy      => 1,
+    isa       => ConsumerOf ["Graphics::Grid::Driver"],
+    builder   => '_build_driver',
+    predicate => 'has_driver',
+    trigger   => sub {
+        my ( $self, $driver ) = @_;
+        $driver->grid($self);
+        $self->_set_vptree();
+    },
 );
 
 has _gp_stack => (
@@ -58,23 +63,34 @@ has _gp_stack => (
     }
 );
 
-sub _build_driver {
+method _build_driver() {
     my $driver_cls = 'Graphics::Grid::Driver::Cairo';
     load $driver_cls;
-    return $driver_cls->new();
+    my $driver = $driver_cls->new( grid => $self );
+    $self->_set_vptree( $self->_current_vptree, $driver );
+    return $driver;
 }
 
 sub _build__vptree {
     my ($self) = @_;
-    return Graphics::Grid::ViewportTree->new(
+    my $vptree = Graphics::Grid::ViewportTree->new(
         node => Graphics::Grid::Viewport->new(
             name => 'ROOT',
-            gp   => $self->driver->default_gpar()
         )
     );
+    return $vptree;
 }
 
 sub _build__current_vptree { $_[0]->_vptree }
+
+=classmethod singleton()
+
+=cut
+
+classmethod singleton() {
+    state $instance = $class->new();
+    return $instance;
+}
 
 =method current_vptree($all=true)
 
@@ -250,7 +266,7 @@ method _seek_viewport( $from_tree, $name_or_path ) {
         if ( $self->_check_vppath( $tree, [@$path] ) ) {
             $self->_current_vptree($tree);
 
-            my $depth         = 0;
+            my $depth          = 0;
             my $from_tree_name = $from_tree->node->name;
             while ( $tree->node->name ne $from_tree_name ) {
                 $depth++;
@@ -313,7 +329,7 @@ method draw($grob) {
 
     # update grob/gtree pre-draw
     $grob = $grob->make_context;
-    if ($grob->can('make_content')) {
+    if ( $grob->can('make_content') ) {
         $grob = $grob->make_content;
     }
 
@@ -325,10 +341,11 @@ method draw($grob) {
         $self->_push_gp( $grob->gp );
     }
     my @gp = reverse @{ $self->_gp_stack };
-    my $merged_gp = reduce { $a->merge($b) } $gp[0], @gp[ 1 .. $#gp ];
+    my $merged_gp = reduce { $a->merge($b) } $gp[0],
+      ( @gp[ 1 .. $#gp ], $self->driver->default_gpar );
     $self->driver->current_gp($merged_gp);
 
-    $grob->_draw( $self );
+    $grob->_draw($self);
 
     if ( $grob->gp ) {
         $self->_pop_gp();
@@ -386,15 +403,6 @@ for my $grob_type ( __PACKAGE__->_grob_types ) {
     *{$grob_type} = $func;
 }
 
-# set current viewport to state
-method _set_vptree( $vptree = $self->_current_vptree ) {
-    $self->driver->current_vptree($vptree);
-
-    my $path = $self->_current_vptree->path_from_root;
-    $self->_clear_gp;
-    $self->_push_gp( grep { defined $_ } map { $_->gp } @$path );
-}
-
 =method write($filename)
 
 Write to file.
@@ -403,6 +411,16 @@ Write to file.
 
 method write($filename) {
     $self->driver->write($filename);
+}
+
+# set current viewport to state
+method _set_vptree( $vptree = $self->_current_vptree, $driver = $self->driver )
+{
+    $driver->current_vptree($vptree);
+
+    my $path = $vptree->path_from_root;
+    $self->_clear_gp;
+    $self->_push_gp( grep { defined $_ } map { $_->gp } @$path );
 }
 
 __PACKAGE__->meta->make_immutable;

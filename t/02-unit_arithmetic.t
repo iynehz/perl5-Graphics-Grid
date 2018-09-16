@@ -102,6 +102,16 @@ for my $case (@cases_constructor) {
         node => Graphics::Grid::Unit->new( [ 1, 2, 3 ], "cm" ) );
     is( ( $ua1 * 2 )->string, '1cm*2, 2cm*2, 3cm*2', 'ua overload +/-/*' );
 
+    my $reduced1 = ( $ua1 * 2 )->reduce();
+    isa_ok( $reduced1, ['Graphics::Grid::Unit'], 'reduce' );
+    is( $reduced1->string, '2cm, 4cm, 6cm', 'reduce' );
+
+    my $reduced2 =
+      ( $ua1 * [ 1 .. 4 ] + Graphics::Grid::Unit->new( [ 1, 2, 3 ], "mm" ) )
+      ->reduce;
+    isa_ok( $reduced2, ['Graphics::Grid::Unit'], 'reduce' );
+    is( $reduced2->string, '1.1cm, 4.2cm, 9.3cm, 4.1cm', 'reduce' );
+
     my $ua2 =
       ( Graphics::Grid::Unit->new( [ 1, 2, 3 ], "cm" ) +
           Graphics::Grid::Unit->new(0.5) ) * 2;
@@ -136,7 +146,7 @@ for my $case (@cases_constructor) {
         '$ua->append()'
     );
 
-    ok(!$ul1->is_null_unit(), '$ul->is_null_unit');
+    ok( !$ul1->is_null_unit(), '$ul->is_null_unit' );
 
     is(
         $ul1->slice( [ 2, 3 ] )->string,
@@ -158,12 +168,12 @@ for my $case (@cases_constructor) {
 }
 
 {
-    my $u1 = Graphics::Grid::Unit->new([1,2,3], 'null');
-    my $u2 = Graphics::Grid::Unit->new([4,5], 'null');
-    my $ul2 = $u1->append($u2*2);
+    my $u1 = Graphics::Grid::Unit->new( [ 1, 2, 3 ], 'null' );
+    my $u2 = Graphics::Grid::Unit->new( [ 4, 5 ], 'null' );
+    my $ul2 = $u1->append( $u2 * 2 );
 
-    is ($ul2->elems, 5, '$ul->elems');
-    ok ($ul2->is_null_unit, '$ul->is_null_unit');
+    is( $ul2->elems, 5, '$ul->elems' );
+    ok( $ul2->is_null_unit, '$ul->is_null_unit' );
 }
 
 done_testing;

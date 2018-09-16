@@ -3,9 +3,22 @@
 use strict;
 use warnings;
 
+use Data::Dumper;
+
 use Test2::V0;
 
+use Graphics::Grid::Grob::Rect;
 use Graphics::Grid::Unit;
+
+sub DumperOneLine {
+    local $Data::Dumper::Indent    = 0;
+    local $Data::Dumper::Terse     = 1;
+    local $Data::Dumper::Sortkeys  = 1;
+    local $Data::Dumper::Quotekeys = 0;
+    local $Data::Dumper::Deparse   = 1;
+
+    return Dumper(@_);
+}
 
 DOES_ok( 'Graphics::Grid::Unit', [qw(Graphics::Grid::UnitLike)] );
 
@@ -81,13 +94,63 @@ my @cases_constructor = (
         value  => [qw(1)],
         unit   => [qw(native)],
     },
+    {
+        params => [
+            [ 1, 2, 3 ],
+            [qw(npc grobwidth grobheight)],
+            [
+                undef,
+                Graphics::Grid::Grob::Rect->new(),
+                Graphics::Grid::Grob::Rect->new()
+            ]
+        ],
+        value => [qw(1 2 3)],
+        unit  => [qw(npc grobwidth grobheight)],
+    },
+    {
+        params => [
+            value => [ 1, 2, 3 ],
+            unit  => [qw(npc grobwidth cm)],
+            data  => [ undef, Graphics::Grid::Grob::Rect->new(), ]
+        ],
+        value => [qw(1 2 3)],
+        unit  => [qw(npc grobwidth cm)],
+    },
 );
 
 for my $case (@cases_constructor) {
+    local $Data::Dumper::Maxdepth = 2;
+
     my $unit = Graphics::Grid::Unit->new( @{ $case->{params} } );
-    ok( $unit, 'constructor' );
+    ok( $unit,
+        sprintf( "constructor for %s", DumperOneLine( $unit->as_hashref ) ) );
     is( $unit->value, $case->{value}, "value" );
     is( $unit->unit,  $case->{unit},  "unit" );
+}
+
+my @cases_bad = (
+    {
+        params => [ 1, "npc", [ Graphics::Grid::Grob::Rect->new() ] ],
+        error => qr/plain unit/,
+    },
+    {
+        params => [
+            value => [ 1, 2, 3 ],
+            unit  => [qw(npc grobwidth grobheight)],
+            data  => [ undef, Graphics::Grid::Grob::Rect->new(), ]
+        ],
+        error => qr/grobwidth\/height/,
+    },
+);
+for my $case (@cases_bad) {
+    local $Data::Dumper::Maxdepth = 2;
+    like(
+        dies {
+            my $unit = Graphics::Grid::Unit->new( @{ $case->{params} } );
+        },
+        $case->{error},
+        sprintf( "dies ok for %s", DumperOneLine( $case->{params} ) )
+    );
 }
 
 {
@@ -128,6 +191,7 @@ for my $case (@cases_constructor) {
         'is_null_unit()' );
 }
 
+ok( Graphics::Grid::Unit->is_absolute_unit('centimeter'),   'is_absolute_unit' );
 ok( Graphics::Grid::Unit->is_absolute_unit('cm'),   'is_absolute_unit' );
 ok( !Graphics::Grid::Unit->is_absolute_unit('npc'), 'is_absolute_unit' );
 

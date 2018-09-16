@@ -66,7 +66,11 @@ method _build_elems() {
 }
 
 method _draw($grid) {
-    $grid->driver->draw_text($self);
+    return $grid->driver->draw_text($self);
+}
+
+method extents($grid) {
+    return $grid->driver->draw_text($self, true);
 }
 
 __PACKAGE__->meta->make_immutable;

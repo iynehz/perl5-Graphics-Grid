@@ -41,6 +41,13 @@ attribute.
 
 This is an alias of C<elems>.
 
+=method extents($grid)
+
+Returns info about the grob's extents (bounding box, etc) on the
+drawing layer, in cm.
+
+Note that not all grob classes have got this method implemented.
+
 =tmpl 
 
 =cut
@@ -119,6 +126,11 @@ classmethod gen_grob_name($prefix="GRID") {
 
 method string() {
     return sprintf("%s[%s]", ref($self), $self->name);
+}
+
+method extents($grid) { 
+    my $class = ref($self);
+    die "Class $class dies not have method 'reduce' implemented.";
 }
 
 1;
