@@ -113,13 +113,15 @@ Generate a unique name for a grob.
 
 =cut
 
-classmethod gen_grob_name($prefix="GRID") {
+classmethod _grob_type() {
     $class = ref($class) || $class;
-
-    state $count = {};
-
     my $type = $class =~ s/^Graphics::Grid::Grob:://r;
-    $type = lc($type =~ s/::/_/gr);
+    return lc($type =~ s/::/_/gr);
+}
+
+classmethod gen_grob_name($prefix="GRID") {
+    state $count = {};
+    my $type = $class->_grob_type();
     my $key = "$prefix.$type";
     return sprintf("$key.%d", $count->{$key}++);
 }

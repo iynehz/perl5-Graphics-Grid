@@ -28,7 +28,7 @@ our @EXPORT_OK = (
       grid_write grid_draw grid_driver
       push_viewport pop_viewport up_viewport down_viewport seek_viewport
       gtree grill grid_grill
-      gen_grob_name
+      grob_name
       ), ( map { ( "grid_${_}", "${_}_grob" ) } @grob_types )
 );
 
@@ -89,7 +89,7 @@ sub grid_grill {
     return $grid->draw($grill);
 }
 
-fun gen_grob_name ($grob, @rest) {
+fun grob_name ($grob, @rest) {
     return $grob->gen_grob_name(@rest);
 }
 
