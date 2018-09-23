@@ -80,7 +80,7 @@ has '+children' => (
 
 =cut
 
-method elems () {
+method elems() {
     if ( $self->is_unit ) {
         return $self->node->elems;
     }
@@ -92,7 +92,7 @@ method elems () {
     }
 }
 
-method is_null_unit () {
+method is_null_unit() {
     if ( $self->is_unit ) {
         return $self->node->is_null_unit;
     }
@@ -132,11 +132,11 @@ C<$idx> is applied like wrap-indexing. So below is same as above.
 
 =cut
 
-method at ($idx) {
+method at($idx) {
     return $self->slice( [$idx] );
 }
 
-method slice ($indices) {
+method slice($indices) {
     my $class = ref($self);
     if ( $self->is_unit ) {
         return $class->new( node => $self->node->slice($indices) );
@@ -147,9 +147,11 @@ method slice ($indices) {
         );
     }
     else {
+        my @new_indices = map { $_ % $self->elems } @$indices;
         return $class->new(
-            node     => $self->node,
-            children => [ map { $_->slice($indices) } @{ $self->children } ]
+            node => $self->node,
+            children =>
+              [ map { $_->slice( \@new_indices ) } @{ $self->children } ]
         );
     }
 }
@@ -158,7 +160,7 @@ method slice ($indices) {
 
 =cut
 
-method string () {
+method string() {
     if ( $self->is_unit ) {
         return $self->node->string;
     }
@@ -169,25 +171,28 @@ method string () {
         return join(
             ', ',
             map {
-                my $arg0 = $self->children->[0]->at($_);
-                my $arg1 = $self->children->[1]->at($_);
+                my $left  = $self->children->[0]->at($_);
+                my $right = $self->children->[1]->at($_);
                 my $format;
                 if ( $self->node eq '*' ) {
-                    if ( $arg0->is_arithmetic ) {
-                        $format = "(%s)%s%s";
+
+                    # Swap number to left, to be in accordance with R 'grid'
+                    #  library.
+                    if ( $right->is_number ) {
+                        ( $left, $right ) = ( $right, $left );
                     }
-                    elsif ( $arg1->is_arithmetic ) {
+                    if ( $right->is_arithmetic and $right->node ne '*' ) {
                         $format = "%s%s(%s)";
                     }
                 }
                 $format //= "%s%s%s";
-                sprintf( $format, $arg0->string, $self->node, $arg1->string );
+                sprintf( $format, $left->string, $self->node, $right->string );
             } ( 0 .. $self->elems - 1 )
         );
     }
 }
 
-method _make_operation ( $op, $other, $swap = undef ) {
+method _make_operation( $op, $other, $swap = undef ) {
     if ( $other->$_isa('Graphics::Grid::UnitList') ) {
         require Graphics::Grid::UnitList;
         return $other->_make_operation( $op, $self, !$swap );
@@ -206,7 +211,7 @@ Checks if the object is a Graphics::Grid::Unit.
 
 =cut
 
-method is_unit () {
+method is_unit() {
     return $self->node->$_isa('Graphics::Grid::Unit');
 }
 
@@ -216,7 +221,7 @@ Checks if the object is an array ref of numbers.
 
 =cut
 
-method is_number () {
+method is_number() {
     return Ref::Util::is_arrayref( $self->node );
 }
 
@@ -227,11 +232,11 @@ to C<!($obj-E<ge>is_unit() or $obj-E<ge>is_number())>.
 
 =cut
 
-method is_arithmetic () {
+method is_arithmetic() {
     return !( $self->is_unit() or $self->is_number() );
 }
 
-method transform_to_cm ($grid, $idx, $gp, $length_cm ) {
+method transform_to_cm( $grid, $idx, $gp, $length_cm ) {
     my $driver = $grid->driver;
     if ( $self->is_unit ) {
         return $self->node->transform_to_cm( $grid, $idx, $gp, $length_cm );
@@ -264,7 +269,7 @@ object.
 
 =cut
 
-method reduce () {
+method reduce() {
     my $class = ref($self);
 
     if ( $self->is_unit ) {
@@ -291,8 +296,10 @@ method reduce () {
                   : ( $right, $left );
                 my @value =
                   map {
-                    $unit->_value_at($_) * $number->node->[ $_ % @{$number->node} ]
-                  } ( 0 .. List::AllUtils::max($unit->elems, $number->elems) - 1 );
+                    $unit->_value_at($_) *
+                      $number->node->[ $_ % @{ $number->node } ]
+                  } ( 0 .. List::AllUtils::max( $unit->elems, $number->elems ) -
+                      1 );
 
                 return Graphics::Grid::Unit->new( \@value, $unit->unit,
                     $unit->data );
@@ -303,7 +310,9 @@ method reduce () {
                         my $a = $left->_transform_absolute_unit_to_cm($_);
                         my $b = $right->_transform_absolute_unit_to_cm($_);
                         $self->node eq '+' ? $a + $b : $a - $b;
-                    } ( 0 .. List::AllUtils::max( $left->elems, $right->elems ) - 1 );
+                    } (
+                        0 .. List::AllUtils::max( $left->elems, $right->elems )
+                          - 1 );
                     return Graphics::Grid::Unit->new( \@value, 'cm' );
                 }
                 else {

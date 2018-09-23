@@ -74,7 +74,7 @@ my @cases_constructor = (
             ],
         ],
         elems  => 3,
-        string => '(1null+0.5null)*2, (2null+0.5null)*2, (3null+0.5null)*2',
+        string => '2*(1null+0.5null), 2*(2null+0.5null), 2*(3null+0.5null)',
         is_null_unit => 1,
     },
 );
@@ -100,7 +100,13 @@ for my $case (@cases_constructor) {
     my $ua1 =
       Graphics::Grid::UnitArithmetic->new(
         node => Graphics::Grid::Unit->new( [ 1, 2, 3 ], "cm" ) );
-    is( ( $ua1 * 2 )->string, '1cm*2, 2cm*2, 3cm*2', 'ua overload +/-/*' );
+    is( ( $ua1 * 2 )->string, '2*1cm, 2*2cm, 2*3cm', 'ua overload +/-/*' );
+
+    # this is in accordance with R 'grid' library.
+    is(
+        ( $ua1 * [ 1, 2, 3, 4 ] * [ 1, 2, 3, 4, 5 ] )->string,
+        '1*1*1cm, 2*2*2cm, 3*3*3cm, 4*4*1cm, 5*1*1cm'
+    );
 
     my $reduced1 = ( $ua1 * 2 )->reduce();
     isa_ok( $reduced1, ['Graphics::Grid::Unit'], 'reduce' );
@@ -115,17 +121,16 @@ for my $case (@cases_constructor) {
     my $ua2 =
       ( Graphics::Grid::Unit->new( [ 1, 2, 3 ], "cm" ) +
           Graphics::Grid::Unit->new(0.5) ) * 2;
-
-    is( $ua2->sum->string, '(1cm+0.5npc)*2+(2cm+0.5npc)*2+(3cm+0.5npc)*2',
-        'sum' );
-    is( $ua2->slice( [ 1, 2 ] )->string,
-        '(2cm+0.5npc)*2, (3cm+0.5npc)*2', 'slice()' );
-
     is(
         $ua2->string,
-        '(1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2',
+        '2*(1cm+0.5npc), 2*(2cm+0.5npc), 2*(3cm+0.5npc)',
         'overload +/-/*'
     );
+
+    is( $ua2->sum->string, '2*(1cm+0.5npc)+2*(2cm+0.5npc)+2*(3cm+0.5npc)',
+        'sum' );
+    is( $ua2->slice( [ 1, 2 ] )->string,
+        '2*(2cm+0.5npc), 2*(3cm+0.5npc)', 'slice()' );
 
     is( ( $ua2 + undef )->string, $ua2->string, '+undef' );
     is( ( $ua2 - undef )->string, $ua2->string, '-undef' );
@@ -138,11 +143,11 @@ for my $case (@cases_constructor) {
         ['Graphics::Grid::UnitList'],
         '$unitarithmetic->append($another_unit) results a unitlist'
     );
-    is( $ul1->string, '(1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2, 1npc',
+    is( $ul1->string, '2*(1cm+0.5npc), 2*(2cm+0.5npc), 2*(3cm+0.5npc), 1npc',
         '$ua->append()' );
     is(
         $u1->append($ua2)->string,
-        '1npc, (1cm+0.5npc)*2, (2cm+0.5npc)*2, (3cm+0.5npc)*2',
+        '1npc, 2*(1cm+0.5npc), 2*(2cm+0.5npc), 2*(3cm+0.5npc)',
         '$ua->append()'
     );
 
@@ -150,18 +155,18 @@ for my $case (@cases_constructor) {
 
     is(
         $ul1->slice( [ 2, 3 ] )->string,
-        '(3cm+0.5npc)*2, 1npc',
+        '2*(3cm+0.5npc), 1npc',
         '$ul->slice()'
     );
     is(
         $ul1->insert( $ua1, 0 )->string,
-        '(1cm+0.5npc)*2, 1cm, 2cm, 3cm, (2cm+0.5npc)*2, (3cm+0.5npc)*2, 1npc',
+        '2*(1cm+0.5npc), 1cm, 2cm, 3cm, 2*(2cm+0.5npc), 2*(3cm+0.5npc), 1npc',
         '$ul->insert()'
     );
 
     is(
         ( $ul1 + $ua1 )->string,
-        '(1cm+0.5npc)*2+1cm, (2cm+0.5npc)*2+2cm, (3cm+0.5npc)*2+3cm, 1npc+1cm',
+        '2*(1cm+0.5npc)+1cm, 2*(2cm+0.5npc)+2cm, 2*(3cm+0.5npc)+3cm, 1npc+1cm',
         'ul overload +'
     );
 
