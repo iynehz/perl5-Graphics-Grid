@@ -9,7 +9,6 @@ use Graphics::Grid::Class;
 use Eval::Closure;
 use List::AllUtils qw(minmax reduce);
 use Types::Standard qw(Bool Int InstanceOf Str);
-use namespace::autoclean;
 
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);

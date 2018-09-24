@@ -7,7 +7,6 @@ use Graphics::Grid::Class;
 # VERSION
 
 use List::AllUtils qw(max);
-use namespace::autoclean;
 
 =include attr_x_y@Graphics::Grid::Positional
 

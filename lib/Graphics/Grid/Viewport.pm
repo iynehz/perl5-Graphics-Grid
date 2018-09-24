@@ -7,7 +7,6 @@ use Graphics::Grid::Class;
 # VERSION
 
 use Types::Standard qw(Int InstanceOf Num Str ArrayRef HashRef);
-use namespace::autoclean;
 
 use Graphics::Grid::Types qw(:all);
 use Graphics::Grid::Unit;

@@ -12,7 +12,6 @@ use List::AllUtils qw(reduce);
 use Math::Trig qw(:pi :radial deg2rad);
 use Module::Load;
 use Types::Standard qw(InstanceOf ConsumerOf ArrayRef HashRef Str);
-use namespace::autoclean;
 
 use Graphics::Grid::Viewport;
 use Graphics::Grid::ViewportTree;

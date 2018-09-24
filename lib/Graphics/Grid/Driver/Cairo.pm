@@ -12,7 +12,6 @@ use List::AllUtils qw(minmax min max pairwise reduce);
 use Math::Trig qw(:pi :radial deg2rad);
 use Path::Tiny;
 use Types::Standard qw(Enum Str InstanceOf Num);
-use namespace::autoclean;
 
 use Graphics::Grid::Extents;
 use Graphics::Grid::Unit;

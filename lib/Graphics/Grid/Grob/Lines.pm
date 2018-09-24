@@ -9,7 +9,6 @@ use Graphics::Grid::Class;
 extends qw(Graphics::Grid::Grob::Polyline);
 
 use Types::Standard qw(ArrayRef Int);
-use namespace::autoclean;
 
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);

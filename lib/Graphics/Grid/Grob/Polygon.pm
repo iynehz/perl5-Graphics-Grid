@@ -8,8 +8,6 @@ use Graphics::Grid::Class;
 
 extends qw(Graphics::Grid::Grob::Polyline);
 
-use namespace::autoclean;
-
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);
 

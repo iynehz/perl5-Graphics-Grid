@@ -9,7 +9,6 @@ use Graphics::Grid::Class;
 extends qw(Forest::Tree);
 
 use Types::Standard qw(ArrayRef InstanceOf);
-use namespace::autoclean;
 
 has '+children' => ( isa => ArrayRef [ InstanceOf ['Graphics::Grid::GTree'] ] );
 

@@ -8,7 +8,6 @@ use Graphics::Grid::Class;
 
 use List::AllUtils qw(uniq);
 use Types::Standard qw(ArrayRef Int);
-use namespace::autoclean;
 
 use Graphics::Grid::Unit;
 use Graphics::Grid::Types qw(:all);

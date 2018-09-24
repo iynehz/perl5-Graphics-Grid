@@ -8,7 +8,6 @@ use Graphics::Grid::Class;
 
 use List::AllUtils qw(min max);
 use Types::Standard qw(Num);
-use namespace::autoclean;
 
 use Graphics::Grid::Types qw(:all);
 

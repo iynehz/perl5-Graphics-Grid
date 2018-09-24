@@ -11,7 +11,6 @@ use Ref::Util qw(is_plain_hashref is_plain_arrayref);
 use Scalar::Util qw(looks_like_number);
 use Type::Params ();
 use Types::Standard qw(Str ArrayRef ConsumerOf Value Num Maybe);
-use namespace::autoclean;
 
 use Graphics::Grid::Types qw(:all);
 use Graphics::Grid::Util qw(points_to_cm);

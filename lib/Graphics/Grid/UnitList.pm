@@ -10,7 +10,6 @@ use List::AllUtils;
 use Scalar::Util qw(looks_like_number);
 use Type::Params ();
 use Types::Standard qw(Str ArrayRef Any Num Maybe);
-use namespace::autoclean;
 
 use Graphics::Grid::Util qw(points_to_cm);
 use Graphics::Grid::Types qw(:all);

@@ -9,7 +9,6 @@ use Graphics::Grid::Role;
 use List::AllUtils qw(reduce);
 use Type::Params;
 use Types::Standard qw(ArrayRef Maybe Num);
-use namespace::autoclean;
 
 use Graphics::Grid::Types qw(UnitLike UnitName);
 

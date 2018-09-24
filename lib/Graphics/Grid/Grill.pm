@@ -6,8 +6,6 @@ use Graphics::Grid::Class;
 
 # VERSION
 
-use namespace::autoclean;
-
 use Graphics::Grid::GPar;
 use Graphics::Grid::Types qw(:all);
 use Graphics::Grid::Unit;

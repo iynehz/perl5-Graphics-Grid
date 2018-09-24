@@ -8,8 +8,6 @@ use Graphics::Grid::Class;
 
 extends qw(Forest::Tree);
 
-use namespace::autoclean;
-
 use Types::Standard qw(ArrayRef InstanceOf);
 
 use Graphics::Grid::Viewport;

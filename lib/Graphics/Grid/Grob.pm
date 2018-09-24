@@ -7,7 +7,6 @@ use Graphics::Grid::Role;
 # VERSION
 
 use Types::Standard qw(InstanceOf Maybe Str);
-use namespace::autoclean;
 
 use Graphics::Grid::GPar;
 use Graphics::Grid::Types qw(:all);

@@ -11,7 +11,6 @@ use List::AllUtils;
 use Graphics::Color::RGB;
 use Types::Standard qw(Num Enum ArrayRef Str Value Int);
 use Type::Utils qw(declare_coercion);
-use namespace::autoclean;
 
 use Graphics::Grid::Types qw(:all);
 
