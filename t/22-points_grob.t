@@ -25,7 +25,8 @@ my @cases_constructor = (
 for my $case (@cases_constructor) {
     my $grob = Graphics::Grid::Grob::Points->new( %{ $case->{params} } );
     ok( $grob, 'constructor' );
-    is( $grob->elems, $case->{elems}, '$grob->elems is ' . $case->{elems} );
+    is( $grob->elems, $case->{elems}, '$grob->elems' );
+    is( $grob->length, $case->{elems}, '$grob->length' );
 }
 
 done_testing;

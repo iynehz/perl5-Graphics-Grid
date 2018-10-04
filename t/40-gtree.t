@@ -12,6 +12,7 @@ use Graphics::Grid::GTree;
 my @cases_constructor = (
     {
         params => [],
+        elems => 0,
     },
     {
         params => [
@@ -22,16 +23,21 @@ my @cases_constructor = (
                 lines_grob( x => [ .5, .3 ],  y => [ .6, .7 ] ),    # left arm
                 lines_grob( x => [ .5, .65 ], y => [ .2, 0 ] ),     # right leg
                 lines_grob( x => [ .5, .35 ], y => [ .2, 0 ] ),     # left leg
-
             ],
             gp => gpar( col => "blue", fill => "yellow", lwd => '3' ),
-        ]
+        ],
+        elems => 6,
     }
 );
 
 for my $case (@cases_constructor) {
-    my $grob = Graphics::Grid::GTree->new( @{ $case->{params} } );
-    ok( $grob, 'constructor' );
+    my $gtree = Graphics::Grid::GTree->new( @{ $case->{params} } );
+    ok( $gtree, 'constructor' );
+
+    if ($case->{elems}) {
+        is($gtree->elems, $case->{elems}, '$gtree->elems');
+        is($gtree->length, $case->{elems}, '$gtree->length');
+    }
 }
 
 done_testing;

@@ -69,6 +69,7 @@ with qw(
   Graphics::Grid::HasGPar
 );
 
+sub length { $_[0]->elems; }
 
 # TODO: Make this a lazy attr, to avoid validating a grob for multiple times.
 sub validate { }
