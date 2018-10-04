@@ -6,7 +6,6 @@ use Graphics::Grid::Class;
 
 # VERSION
 
-use PerlX::Maybe qw(:all);
 use Ref::Util qw(is_plain_hashref is_plain_arrayref);
 use Scalar::Util qw(looks_like_number);
 use Type::Params ();
@@ -39,7 +38,7 @@ around BUILDARGS( $orig, $class : @rest ) {
         %params = (
             value => $rest[0],
             unit  => $rest[1],
-            provided scalar(@rest) == 3, data => $rest[2],
+            ( @rest == 3 ? ( data => $rest[2] ) : () ),
         );
     }
     else {
@@ -214,7 +213,12 @@ method _data_at ($idx) {
 method slice ($indices) {
     my @value = map { $self->_value_at($_) } @$indices;
     my @unit  = map { $self->_unit_at($_) } @$indices;
-    return ref($self)->new( \@value, \@unit );
+    my $data = [ map { $self->_data_at($_) } @$indices ];
+    return ref($self)->new(
+        value => \@value,
+        unit  => \@unit,
+        ( @$data > 0 ? ( data => $data ) : () ),
+    );
 }
 
 method at ($idx) {
@@ -240,10 +244,11 @@ method string () {
 =cut
 
 method as_hashref () {
+    my $data = $self->data;
     return {
-        unit       => $self->unit,
-        value      => $self->value,
-        maybe data => $self->data
+        unit  => $self->unit,
+        value => $self->value,
+        ( defined($data) and @$data ) ? ( data => $data ) : ()
     };
 }
 
@@ -308,8 +313,8 @@ Returns true if all units in this object are absolute.
 
 =cut
 
-method is_absolute() {
-    return List::AllUtils::all { $self->is_absolute_unit($_) } @{$self->unit};
+method is_absolute () {
+    return List::AllUtils::all { $self->is_absolute_unit($_) } @{ $self->unit };
 }
 
 method _transform_absolute_unit_to_cm ($idx) {
