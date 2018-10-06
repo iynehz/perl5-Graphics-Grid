@@ -207,7 +207,7 @@ method _data_at ($idx) {
     if ( defined $x ) {
         return $x->[$idx];
     }
-    return undef;
+    return undef;   ## no critic
 }
 
 method slice ($indices) {
