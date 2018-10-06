@@ -135,6 +135,9 @@ method extents($grid) {
     die "Class $class dies not have method 'reduce' implemented.";
 }
 
+method grob_width($grid) { $self->extents($grid)->width; }
+method grob_height($grid) { $self->extents($grid)->height; }
+
 1;
 
 __END__

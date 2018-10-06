@@ -12,6 +12,11 @@ use Graphics::Grid::Driver::Cairo;
 pass("Graphics::Grid::Functions loads");
 
 {
+    my $u = unit_c(unit(1, 'npc'), unit(2, 'cm'));
+    isa_ok($u, ['Graphics::Grid::UnitList'], 'unit_c');
+}
+
+{
     my $driver1 = grid_driver( width => 800, height => 600 );
     is( [ $driver1->width, $driver1->height ], [ 800, 600 ], 'grid_driver()' );
  

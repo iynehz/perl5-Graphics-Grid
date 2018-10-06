@@ -9,14 +9,15 @@ use Graphics::Grid::Setup;
 use Module::Load;
 use Types::Standard qw(ArrayRef);
 
-use Graphics::Grid;
 use Graphics::Grid::GPar;
-use Graphics::Grid::Unit;
-use Graphics::Grid::Layout;
-use Graphics::Grid::Viewport;
-use Graphics::Grid::ViewportTree;
 use Graphics::Grid::GTree;
 use Graphics::Grid::Grill;
+use Graphics::Grid::Layout;
+use Graphics::Grid::Unit;
+use Graphics::Grid::UnitList;
+use Graphics::Grid::Viewport;
+use Graphics::Grid::ViewportTree;
+use Graphics::Grid;
 
 my @grob_types = Graphics::Grid->_grob_types();
 
@@ -24,11 +25,12 @@ use parent qw(Exporter::Tiny);
 
 our @EXPORT_OK = (
     qw(
-      unit gpar viewport viewport_tree grid_layout
+      unit unit_c gpar viewport viewport_tree grid_layout
       grid_write grid_draw grid_driver
       push_viewport pop_viewport up_viewport down_viewport seek_viewport
       gtree grill grid_grill
       grob_name
+      grob_width grob_height
       ), ( map { ( "grid_${_}", "${_}_grob" ) } @grob_types )
 );
 
@@ -36,33 +38,30 @@ our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
 my $grid = Graphics::Grid->singleton;    # global object
 
-sub unit {
-    return Graphics::Grid::Unit->new(@_);
-}
+=func grid_driver(:$driver='Cairo', %rest)
 
-sub gpar {
-    return Graphics::Grid::GPar->new(@_);
-}
+Set the device driver. If you don't run this function, the default driver
+will be effective.
 
-sub viewport {
-    return Graphics::Grid::Viewport->new(@_);
-}
+If C<$driver> consumes Graphics::Grid::Driver, C<$driver> is assigned to
+the global Graphics::Grid object, and C<%rest> is ignored.
 
-sub viewport_tree {
-    return Graphics::Grid::ViewportTree->new(@_);
-}
+    grid_driver(driver => Graphics::Grid::Driver::Cairo->new(...));
 
-sub grid_layout {
-    return Graphics::Grid::Layout->new(@_);
-}
+If C<$driver> is a string, a Graphics::Grid::Driver::$driver object is
+created with C<%rest> as construction parameters, and is assigned to the
+global Graphics::Grid object.
 
-sub grid_draw {
-    return $grid->draw(@_);
-}
+    grid_driver(driver => 'Cairo', width => 800, height => 600);
 
-sub grid_write {
-    return $grid->write(@_);
-}
+You may run it at the the beginning of you code. At present changing driver
+settings at the middle is not guarenteed to work.
+
+This function returns current width and height.
+
+    my $driver = grid_device();
+
+=cut
 
 fun grid_driver ( :$driver = 'Cairo', %rest ) {
     if ( $driver->DOES('Graphics::Grid::Driver') ) {
@@ -76,18 +75,128 @@ fun grid_driver ( :$driver = 'Cairo', %rest ) {
     return $grid->driver;
 }
 
-sub gtree {
-    return Graphics::Grid::GTree->new(@_);
+=func unit(%params)
+
+It's same as C<Graphics::Grid::Unit-E<gt>new>.
+
+=func unit_c(@unit_objs)
+
+It's same as C<Graphics::Grid::UnitList-E<gt>new>.
+
+=cut
+
+sub unit {
+    return Graphics::Grid::Unit->new(@_);
 }
 
-sub grill {
-    return Graphics::Grid::Grill->new(@_);
+sub unit_c {
+    return Graphics::Grid::UnitList->new(@_);
 }
 
-sub grid_grill {
-    my $grill = Graphics::Grid::Grill->new(@_);
-    return $grid->draw($grill);
+=func gpar(%params)
+
+It's same as C<Graphics::Grid::GPar-E<gt>new>.
+
+=cut
+
+sub gpar {
+    return Graphics::Grid::GPar->new(@_);
 }
+
+=func viewport(%params)
+
+It's same as C<Graphics::Grid::Viewport-E<gt>new>.
+
+=func viewport_tree($parent, $children)
+
+It's same as C<Graphics::Grid::ViewportTree-E<gt>new>.
+
+=cut
+
+sub viewport {
+    return Graphics::Grid::Viewport->new(@_);
+}
+
+sub viewport_tree {
+    return Graphics::Grid::ViewportTree->new(@_);
+}
+
+=func push_viewport($viewport)
+
+It's same as Graphics::Grid's C<push_viewport> method.
+
+=func pop_viewport($n=1)
+
+It's same as Graphics::Grid's C<pop_viewport> method.
+
+=func up_viewport($n=1)
+
+It's same as Graphics::Grid's C<up_viewport> method.
+
+=func down_viewport($from_tree_node, $name)
+
+It's same as Graphics::Grid's C<down_viewport> method.
+
+=func seek_viewport($name)
+
+It's same as Graphics::Grid's C<seek_viewport> method.
+
+=cut
+
+for my $method (
+    qw(
+    push_viewport pop_viewport up_viewport down_viewport seek_viewport
+    )
+  )
+{
+    no strict 'refs';    ## no critic
+    *{$method} = sub { $grid->$method(@_); }
+}
+
+=func grid_layout(%prams)
+
+It's same as C<Graphics::Grid::Layout-E<gt>new>.
+
+=cut
+
+sub grid_layout {
+    return Graphics::Grid::Layout->new(@_);
+}
+
+=func grid_draw($grob)
+
+It's same as Graphics::Grid's C<draw> method.
+
+=func grid_write($filename)
+
+It's same as Graphics::Grid's C<write> method.
+
+=cut
+
+sub grid_draw {
+    return $grid->draw(@_);
+}
+
+sub grid_write {
+    return $grid->write(@_);
+}
+
+=head2 ${grob_type}_grob(%params)
+
+This creates a grob object.
+
+C<$grob_type> can be one of following,
+
+=include grob_types@Graphics::Grid
+
+=head2 grid_${grob_type}(%params)
+
+This creates a grob, and draws it. This is same as Graphics::Grid's
+${grob_type}(...) method.
+
+See above for possible C<$grob_type>.
+
+=cut
 
 fun grob_name ($grob, @rest) {
     return $grob->gen_grob_name(@rest);
@@ -106,15 +215,43 @@ for my $grob_type (@grob_types) {
     *{ "grid_" . $grob_type } = sub { $grid->$grob_type(@_); };
 }
 
-for my $method (
-    qw(
-    push_viewport pop_viewport up_viewport down_viewport seek_viewport
-    )
-  )
-{
-    no strict 'refs';    ## no critic
-    *{$method} = sub { $grid->$method(@_); }
+=func gtree(%params)
+
+It's same as C<Graphics::Grid::GTree-E<gt>new>.
+
+=cut
+
+sub gtree {
+    return Graphics::Grid::GTree->new(@_);
 }
+
+=func grill(%params)
+
+This creates a grill object.
+
+=func grid_grill(%params)
+
+This creates a grill object and draws it.
+
+=cut
+
+sub grill {
+    return Graphics::Grid::Grill->new(@_);
+}
+
+sub grid_grill {
+    my $grill = Graphics::Grid::Grill->new(@_);
+    return $grid->draw($grill);
+}
+
+=func grob_width($grob)
+
+=func grob_height($grob)
+
+=cut
+
+fun grob_width($grob) { $grob->grob_width($grid); }
+fun grob_height($grob) { $grob->grob_height($grid); }
 
 1;
 
@@ -150,106 +287,6 @@ __END__
 This is the function interface for L<Graphics::Grid>. In this package
 it has a global Graphics::Grid object, on which the functions are
 operated.
-
-=head1 FUNCTIONS
-
-=head2 unit(%params)
-
-It's same as C<Graphics::Grid::Unit-E<gt>new>.
-
-=head2 viewport(%params)
-
-It's same as C<Graphics::Grid::Viewport-E<gt>new>.
-
-=head2 viewport_tree($parent, $children)
-
-It's same as C<Graphics::Grid::ViewportTree-E<gt>new>.
-
-=head2 layout(%prams)
-
-It's same as C<Graphics::Grid::Layout-E<gt>new>.
-
-=head2 gpar(%params)
-
-It's same as C<Graphics::Grid::GPar-E<gt>new>.
-
-=head2 push_viewport($viewport)
-
-It's same as Graphics::Grid's C<push_viewport> method.
-
-=head2 pop_viewport($n=1)
-
-It's same as Graphics::Grid's C<pop_viewport> method.
-
-=head2 up_viewport($n=1)
-
-It's same as Graphics::Grid's C<up_viewport> method.
-
-=head2 down_viewport($from_tree_node, $name)
-
-It's same as Graphics::Grid's C<down_viewport> method.
-
-=head2 seek_viewport($name)
-
-It's same as Graphics::Grid's C<seek_viewport> method.
-
-=head2 ${grob_type}_grob(%params)
-
-This creates a grob object.
-
-C<$grob_type> can be one of following,
-
-=include grob_types@Graphics::Grid
-
-=head2 grid_${grob_type}(%params)
-
-This creates a grob, and draws it. This is same as Graphics::Grid's
-${grob_type}(...) method.
-
-See above for possible C<$grob_type>.
-
-=head2 grill(%params)
-
-This creates a grill object.
-
-=head2 grid_grill(%params)
-
-This creates a grill object and draws it.
-
-=head2 gtree(%params)
-
-It's same as C<Graphics::Grid::GTree-E<gt>new>.
-
-=head2 grid_draw($grob)
-
-It's same as Graphics::Grid's C<draw> method.
-
-=head2 grid_driver(:$driver='Cairo', %rest)
-
-Set the device driver. If you don't run this function, the default driver
-will be effective.
-
-If C<$driver> consumes Graphics::Grid::Driver, C<$driver> is assigned to
-the global Graphics::Grid object, and C<%rest> is ignored.
-
-    grid_driver(driver => Graphics::Grid::Driver::Cairo->new(...));
-
-If C<$driver> is a string, a Graphics::Grid::Driver::$driver object is
-created with C<%rest> as construction parameters, and is assigned to the
-global Graphics::Grid object.
-
-    grid_driver(driver => 'Cairo', width => 800, height => 600);
-
-You may run it at the the beginning of you code. At present changing driver
-settings at the middle is not guarenteed to work.
-
-This function returns current width and height.
-
-    my $driver = grid_device();
-
-=head2 grid_write($filename)
-
-It's same as Graphics::Grid's C<write> method.
 
 =head1 SEE ALSO
 
