@@ -1,6 +1,6 @@
 package Graphics::Grid::Types;
 
-# ABSTRACT: Custom types and coercions used by Graphics::Grid
+# ABSTRACT: Custom types and coercions
 
 use 5.014;
 use warnings;
@@ -117,15 +117,21 @@ coerce FontFace, from Str, via {
 
 declare Clip, as Enum [qw(on off inherit)];
 
-declare_coercion "ArrayRefFromAny", to_type ArrayRef, from Any,
-  via { is_plain_arrayref($_) ? $_ : [$_] };
-declare_coercion "ArrayRefFromValue", to_type ArrayRef, from Value,
-  via { [$_] };
+declare_coercion "ArrayRefFromAny", to_type ArrayRef, from Any, via { [$_] };
 
 1;
 
 __END__
 
+=head1 SYNOPSIS
+
+    use Graphics::Grid::Types qw(:all);
+
+=head1 DESCRIPTION
+
+This module defines custom L<Type::Tiny> types and coercions used
+by the library.
+
 =head1 SEE ALSO
 
-L<Graphics::Grid>
+L<Type::Tiny>

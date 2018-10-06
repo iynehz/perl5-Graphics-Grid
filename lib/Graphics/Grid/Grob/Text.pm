@@ -20,7 +20,7 @@ specified, these multiple strings will be drawn.
 
 has label => (
     is => 'ro',
-    isa      => ( ArrayRef [Str] )->plus_coercions(ArrayRefFromValue),
+    isa      => ( ArrayRef [Str] )->plus_coercions(ArrayRefFromAny),
     coerce   => 1,
     required => 1,
 );
@@ -37,7 +37,7 @@ The angle to rotate the text.
 
 has rot => (
     is => 'ro',
-    isa => ( ArrayRef [Num] )->plus_coercions(ArrayRefFromValue),
+    isa => ( ArrayRef [Num] )->plus_coercions(ArrayRefFromAny),
     coerce => 1,
     default => sub { [0] },
 );

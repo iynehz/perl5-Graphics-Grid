@@ -7,7 +7,7 @@ use MooseX::Aliases;
 
 # VERSION
 
-use List::AllUtils;
+use List::AllUtils qw(pairgrep pairmap zip);
 use Graphics::Color::RGB;
 use Types::Standard qw(Num Enum ArrayRef Str Value Int);
 use Type::Utils qw(declare_coercion);
@@ -20,9 +20,9 @@ my $NonNegative = Num->where( sub { $_ >= 0 } );
 my $Color = ( ArrayRef [Color] )->plus_coercions( Color, sub { [$_] } )
   ->plus_coercions( Str, sub { [ Color->coerce($_) ] } );
 
-around BUILDARGS($orig, $class : @rest) {
-    my %params = @rest == 1 ? %{$rest[0]} : @rest;
-    return $class->$orig(List::AllUtils::pairgrep { defined $b } %params);
+around BUILDARGS( $orig, $class : @rest ) {
+    my %params = @rest == 1 ? %{ $rest[0] } : @rest;
+    return $class->$orig( pairgrep { defined $b } %params );
 }
 
 # color properties
@@ -39,7 +39,7 @@ has fill => (
 );
 has alpha => (
     is      => 'ro',
-    isa     => ( ArrayRef [$ZeroToOne] )->plus_coercions(ArrayRefFromValue),
+    isa     => ( ArrayRef [$ZeroToOne] )->plus_coercions(ArrayRefFromAny),
     coerce  => 1,
     default => sub { [1] },
 );
@@ -47,66 +47,66 @@ has alpha => (
 # line properties
 has lty => (
     is     => 'ro',
-    isa    => ( ArrayRef [LineType] )->plus_coercions(ArrayRefFromValue),
+    isa    => ( ArrayRef [LineType] )->plus_coercions(ArrayRefFromAny),
     coerce => 1,
     alias  => 'linetype',
 );
 has lwd => (
     is     => 'ro',
-    isa    => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
+    isa    => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromAny),
     coerce => 1,
-    alias => 'linewidth',
+    alias  => 'linewidth',
 );
 has lex => (
     is      => 'ro',
-    isa     => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
+    isa     => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromAny),
     coerce  => 1,
     default => sub { [1] },
 );
 has lineend => (
     is     => 'ro',
-    isa    => ( ArrayRef [LineEnd] )->plus_coercions(ArrayRefFromValue),
+    isa    => ( ArrayRef [LineEnd] )->plus_coercions(ArrayRefFromAny),
     coerce => 1
 );
 has linejoin => (
     is     => 'ro',
-    isa    => ( ArrayRef [LineJoin] )->plus_coercions(ArrayRefFromValue),
+    isa    => ( ArrayRef [LineJoin] )->plus_coercions(ArrayRefFromAny),
     coerce => 1
 );
 has linemitre => (
     is     => 'ro',
-    isa    => ( ArrayRef [$LineMitre] )->plus_coercions(ArrayRefFromValue),
+    isa    => ( ArrayRef [$LineMitre] )->plus_coercions(ArrayRefFromAny),
     coerce => 1
 );
 
 # text properties
 has fontsize => (
     is     => 'ro',
-    isa    => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
+    isa    => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromAny),
     coerce => 1
 );
 has fontfamily => (
     is     => 'ro',
-    isa    => ( ArrayRef [Str] )->plus_coercions(ArrayRefFromValue),
+    isa    => ( ArrayRef [Str] )->plus_coercions(ArrayRefFromAny),
     coerce => 1,
     alias  => 'family',
 );
 has fontface => (
     is     => 'ro',
-    isa    => ( ArrayRef [FontFace] )->plus_coercions(ArrayRefFromValue),
+    isa    => ( ArrayRef [FontFace] )->plus_coercions(ArrayRefFromAny),
     coerce => 1,
     alias  => 'face',
 );
 has lineheight => (
     is     => 'ro',
-    isa    => (ArrayRef[$NonNegative])->plus_coercions(ArrayRefFromValue),
+    isa    => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromAny),
     coerce => 1
 );
 
 # other properties
 has cex => (
     is      => 'ro',
-    isa     => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromValue),
+    isa     => ( ArrayRef [$NonNegative] )->plus_coercions(ArrayRefFromAny),
     coerce  => 1,
     default => sub { [1] },
 );
@@ -201,8 +201,8 @@ method merge ($another_gpar) {
             my @self_val    = @{ $self->$key };
             my @another_val = @{ $another_gpar->$key };
             $val = [
-                List::AllUtils::pairmap { $a * $b }
-                map { $_ // 1 } List::AllUtils::zip( @self_val, @another_val )
+                pairmap { $a * $b }
+                map { $_ // 1 } zip( @self_val, @another_val )
             ];
         }
         else {
