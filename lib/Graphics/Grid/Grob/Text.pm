@@ -42,7 +42,7 @@ has rot => (
     default => sub { [0] },
 );
 
-#has check_overlap => ( is => 'ro', isa => Bool, default => 0 );
+#has check_overlap => ( is => 'ro', default => 0 );
 
 =include attr_gp@Graphics::Grid::HasGPar
 

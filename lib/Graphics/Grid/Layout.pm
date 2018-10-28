@@ -68,7 +68,7 @@ other.
 
 =cut
 
-has respect => ( is => 'rw', isa => Bool, default => 0 );
+has respect => ( is => 'rw', default => 0 );
 
 with qw(Graphics::Grid::HasJust);
 
