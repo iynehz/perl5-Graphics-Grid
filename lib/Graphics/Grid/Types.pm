@@ -61,10 +61,18 @@ coerce Justification, from Str, via {
             center => [ 0.5, 0.5 ],
             centre => [ 0.5, 0.5 ],
         };
-        $mapping->{bottom_left}  = $mapping->{left_bottom}  = [ 0, 0 ];
-        $mapping->{top_left}     = $mapping->{left_top}     = [ 0, 1 ];
-        $mapping->{bottom_right} = $mapping->{right_bottom} = [ 1, 0 ];
-        $mapping->{top_right}    = $mapping->{right_top}    = [ 1, 1 ];
+        my @setup = (
+            [ [qw(bottom left)],  [ 0, 0 ] ],
+            [ [qw(top left)],     [ 0, 1 ] ],
+            [ [qw(bottom right)], [ 1, 0 ] ],
+            [ [qw(top right)],    [ 1, 1 ] ],
+        );
+        for my $item (@setup) {
+            my ( $names, $just ) = @$item;
+            my ( $a,     $b )    = @$names;
+            $mapping->{"$a$b"} = $mapping->{"$b$a"} = $mapping->{"${a}_$b"} =
+              $mapping->{"${b}_$a"} = $just;
+        }
     }
 
     unless ( exists $mapping->{$_} ) {
