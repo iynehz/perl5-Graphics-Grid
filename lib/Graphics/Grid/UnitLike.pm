@@ -70,6 +70,7 @@ it would return a Graphics::Grid::UnitList object.
 =method insert($other, $after=$self->elems-1)
 
 Insert another UnitLike object after index C<$after>.
+Insert before first element if C<after> is a negative value.
 
 =tmpl
 
