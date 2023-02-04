@@ -44,3 +44,8 @@ perltidy.LOG
 
 # nytprof
 nytprof/
+
+# dzil build tarball and dir
+Graphics-Grid-*.tar.gz
+Graphics-Grid-*/
+

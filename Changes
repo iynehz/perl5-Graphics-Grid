@@ -1,6 +1,7 @@
 Revision history
 
-0.0001_01   2018-07-19
+0.001       2023-02-04
+    - Changed my github username.
     - Remove MooseX::HasDefaults::RO as dependency.
     - Add length() method as alias of elems() in Grob and UnitLike roles.
     - Add a "grill" grob.

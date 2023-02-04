@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/stphnlyd/perl5-Graphics-Grid.svg?branch=master)](https://travis-ci.org/stphnlyd/perl5-Graphics-Grid)
+[![Build Status](https://travis-ci.org/iynehz/perl5-Graphics-Grid.svg?branch=master)](https://travis-ci.org/iynehz/perl5-Graphics-Grid)
 
 # NAME
 
@@ -6,7 +6,7 @@ Graphics::Grid - An incomplete port of the R "grid" library to Perl
 
 # VERSION
 
-version 0.0001\_01
+version 0.001
 
 # SYNOPSIS
 
@@ -70,15 +70,15 @@ The target of this Perl Graphics::Grid library, as of today, is to have
 most of the R "grid"'s fundamental features mentioned above.
 
 This Graphics::Grid module is the object interface of this libray. There is
-also a function interface [Graphics::Grid::Functions](https://metacpan.org/pod/Graphics::Grid::Functions), which is more like
+also a function interface [Graphics::Grid::Functions](https://metacpan.org/pod/Graphics%3A%3AGrid%3A%3AFunctions), which is more like
 the interface of the R "grid" library.
 
 # ATTRIBUTES
 
 ## driver
 
-Set the device driver. The value needs to be a consumer of the [Graphics::Grid::Driver](https://metacpan.org/pod/Graphics::Grid::Driver)
-role. Default is a [Graphics::Grid::Driver::Cairo](https://metacpan.org/pod/Graphics::Grid::Driver::Cairo) object.
+Set the device driver. The value needs to be a consumer of the [Graphics::Grid::Driver](https://metacpan.org/pod/Graphics%3A%3AGrid%3A%3ADriver)
+role. Default is a [Graphics::Grid::Driver::Cairo](https://metacpan.org/pod/Graphics%3A%3AGrid%3A%3ADriver%3A%3ACairo) object.
 
 # CLASS METHODS
 
@@ -182,7 +182,7 @@ library is ported.
 
 The R grid package [https://stat.ethz.ch/R-manual/R-devel/library/grid/html/grid-package.html](https://stat.ethz.ch/R-manual/R-devel/library/grid/html/grid-package.html)
 
-[Graphics::Grid::Functions](https://metacpan.org/pod/Graphics::Grid::Functions)
+[Graphics::Grid::Functions](https://metacpan.org/pod/Graphics%3A%3AGrid%3A%3AFunctions)
 
 Examples in the `examples` directory of the package release.
 
@@ -194,7 +194,7 @@ Stephan Loyd <sloyd@cpan.org>
 
 # COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2018 by Stephan Loyd.
+This software is copyright (c) 2018-2023 by Stephan Loyd.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
