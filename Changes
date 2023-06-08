@@ -1,5 +1,8 @@
 Revision history
 
+0.001001    TBD
+    - Require List::AllUtils >= 0.19
+
 0.001       2023-02-04
     - Changed my github username.
     - Remove MooseX::HasDefaults::RO as dependency.
